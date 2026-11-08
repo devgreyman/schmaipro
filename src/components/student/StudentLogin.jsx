@@ -104,7 +104,9 @@ export default function StudentLogin() {
             </div>
           )}
         </div>
-
+{/* Header Text */}
+<div className="text-center mb-7">
+  
        
 
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
