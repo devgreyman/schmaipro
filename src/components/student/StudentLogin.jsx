@@ -55,6 +55,8 @@ export default function StudentLogin() {
     }
 
     processStudentLogin(schoolEmail.trim(), regNo.trim(), currentClass?.code || 'GEN');
+    setSchoolEmail('');
+    setRegNo('');
   };
 
   return (

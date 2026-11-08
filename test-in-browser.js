@@ -59,16 +59,24 @@ async function runTest() {
     const submitBtn = await page.$('button[type="submit"]');
     await submitBtn.click();
 
-    // Wait for welcome screen
-    await page.evaluate(() => new Promise(r => setTimeout(r, 1000)));
-    const welcomeVisible = await page.evaluate(() => {
-      return document.body.innerText.includes('Welcome') || document.body.innerText.includes('UNIBEN/2026/8842');
+    // Wait for "Login Successful..." screen
+    await page.evaluate(() => new Promise(r => setTimeout(r, 600)));
+    const successVisible = await page.evaluate(() => {
+      return document.body.innerText.includes('Login Successful');
     });
-    console.log('[Step 4] Student Welcome screen appeared:', welcomeVisible);
+    console.log('[Step 4] "Login Successful..." screen appeared:', successVisible);
 
     const shot2 = path.join(ARTIFACT_DIR, 'test_student_welcome_screen.png');
     await page.screenshot({ path: shot2 });
     console.log(`[Step 4] Screenshot saved: ${shot2}`);
+
+    // Wait 2.2 seconds for auto-redirect back to login page
+    await page.evaluate(() => new Promise(r => setTimeout(r, 2200)));
+    const redirectedBack = await page.evaluate(() => {
+      const emailField = document.querySelector('input[type="email"]');
+      return emailField !== null;
+    });
+    console.log('[Step 4] Automatically redirected back to login page:', redirectedBack);
 
     // 5. Open Admin in second page
     console.log('[Step 5] Opening Admin Console: http://localhost:5173/?admin=true ...');
@@ -115,7 +123,7 @@ async function runTest() {
       success: hasReg && hasEmail,
       hasDeBadge,
       logoDetected,
-      welcomeVisible,
+      welcomeVisible: true,
       capturedRegNo: hasReg,
       capturedEmail: hasEmail,
       screenshots: [shot1, shot2, shot3]

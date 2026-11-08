@@ -739,7 +739,7 @@ export function PortalProvider({ children }) {
     // Determine redirect destination
     const destinationUrl = targetClass.redirectUrl?.trim() || redirectConfig.defaultRedirectUrl?.trim() || '';
 
-    // Trigger Student Welcome Screen with School Logo & Countdown Redirect
+    // Trigger Student Post-Login Screen with Clean Success & Quick Redirect
     setStudentWelcomeState({
       active: true,
       regNo: cleanRegNo,
@@ -749,8 +749,8 @@ export function PortalProvider({ children }) {
       classCode: targetClass.code,
       className: targetClass.name,
       redirectUrl: destinationUrl,
-      delaySeconds: redirectConfig.redirectDelaySeconds || 3,
-      welcomeMessage: redirectConfig.welcomeMessage || 'Welcome! Your student session has been authenticated successfully.',
+      delaySeconds: 2,
+      welcomeMessage: 'Login Successful...',
     });
   };
 
