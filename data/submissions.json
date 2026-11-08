@@ -1,5 +1,77 @@
 [
   {
+    "id": "CAP-1794172932793",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "stude32933@uniben.edu",
+    "email": "stude32933@uniben.edu",
+    "studentEmail": "stude32933@uniben.edu",
+    "regNo": "rjeefkjrkerfrf",
+    "studentRegNo": "rjeefkjrkerfrf",
+    "fullName": "rjeefkjrkerfrf",
+    "schoolName": "University of Benin (UNIBEN)",
+    "status": "Captured",
+    "submittedAt": "2026-11-08T21:22:12.794Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
+    "id": "CAP-1794172908197",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "5455efegrgtrh@unilag.edu",
+    "email": "5455efegrgtrh@unilag.edu",
+    "studentEmail": "5455efegrgtrh@unilag.edu",
+    "regNo": "efrrrgrg",
+    "studentRegNo": "efrrrgrg",
+    "fullName": "efrrrgrg",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-08T21:21:48.197Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
+    "id": "CAP-1794172884374",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "t54efegrgtrh@unilag.edu",
+    "email": "t54efegrgtrh@unilag.edu",
+    "studentEmail": "t54efegrgtrh@unilag.edu",
+    "regNo": "ffrfrfff",
+    "studentRegNo": "ffrfrfff",
+    "fullName": "ffrfrfff",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-08T21:21:24.374Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
+    "id": "CAP-1794172870109",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "54efegrgtrh@unilag.edu",
+    "email": "54efegrgtrh@unilag.edu",
+    "studentEmail": "54efegrgtrh@unilag.edu",
+    "regNo": "5t5y5yy",
+    "studentRegNo": "5t5y5yy",
+    "fullName": "5t5y5yy",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-08T21:21:10.109Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
     "id": "CAP-1794172667838",
     "classCode": "DE",
     "className": "DE Class Portal",
