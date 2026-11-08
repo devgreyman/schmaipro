@@ -3,6 +3,117 @@ import { INITIAL_CLASSES, INITIAL_NOTIFICATION_EMAILS, INITIAL_SUBMISSIONS, INIT
 
 const PortalContext = createContext(null);
 
+/**
+ * Normalizes, deduplicates, and migrates stored schools:
+ * - Purges obsolete cached "LAGOS" records and upgrades to official UNILAG
+ * - Guarantees UNIBEN (@uniben.edu) and UNILAG (@unilag.edu.ng) always exist
+ * - Preserves any custom user-uploaded logos (base64 Data URIs)
+ * - Prevents duplicate domain registrations
+ */
+const normalizeSchools = (rawSchools) => {
+  if (!Array.isArray(rawSchools) || rawSchools.length === 0) {
+    return INITIAL_SCHOOLS;
+  }
+
+  const domainMap = new Map();
+
+  // 1. Seed with INITIAL_SCHOOLS presets
+  INITIAL_SCHOOLS.forEach((s) => {
+    domainMap.set(s.domain.toLowerCase(), { ...s });
+  });
+
+  // 2. Overlay user data safely
+  rawSchools.forEach((saved) => {
+    if (!saved || !saved.domain) return;
+    const dom = saved.domain.trim().toLowerCase();
+
+    // Check if this is UNILAG
+    const isUnilag = 
+      dom.includes('unilag') || 
+      saved.id === 'sch-unilag' || 
+      saved.id === 'sch-11' || 
+      saved.acronym === 'LAGOS' || 
+      saved.name?.toLowerCase().includes('lagos');
+
+    if (isUnilag) {
+      const canonicalKey = '@unilag.edu.ng';
+      const defaultUnilag = INITIAL_SCHOOLS.find(s => s.id === 'sch-unilag') || INITIAL_SCHOOLS[0];
+
+      // Detect if user uploaded a custom logo (PNG / JPEG / WebP data URI or non-default SVG)
+      const hasCustomUpload = typeof saved.logo === 'string' && (
+        saved.logo.startsWith('data:image/png') ||
+        saved.logo.startsWith('data:image/jpeg') ||
+        saved.logo.startsWith('data:image/webp')
+      );
+
+      // Check if stored logo is the old default SVG with LAGOS
+      const isOldLagosSvg = typeof saved.logo === 'string' && (
+        saved.logo.includes('LAGOS') || saved.acronym === 'LAGOS'
+      );
+
+      domainMap.set(canonicalKey, {
+        id: 'sch-unilag',
+        name: 'University of Lagos (UNILAG)',
+        domain: '@unilag.edu.ng',
+        acronym: 'UNILAG',
+        color: saved.color || '#047857',
+        logo: hasCustomUpload ? saved.logo : (isOldLagosSvg ? defaultUnilag.logo : (saved.logo || defaultUnilag.logo)),
+        tagline: saved.tagline || 'In Deed and in Truth • Akoka, Lagos',
+        country: 'Nigeria',
+        isDefault: false,
+      });
+      return;
+    }
+
+    // Check if this is UNIBEN
+    const isUniben = 
+      dom.includes('uniben') || 
+      saved.id === 'sch-uniben' || 
+      saved.name?.toLowerCase().includes('benin');
+
+    if (isUniben) {
+      const canonicalKey = '@uniben.edu';
+      const defaultUniben = INITIAL_SCHOOLS.find(s => s.id === 'sch-uniben') || INITIAL_SCHOOLS[1];
+
+      const hasCustomUpload = typeof saved.logo === 'string' && (
+        saved.logo.startsWith('data:image/png') ||
+        saved.logo.startsWith('data:image/jpeg') ||
+        saved.logo.startsWith('data:image/webp')
+      );
+
+      domainMap.set(canonicalKey, {
+        id: 'sch-uniben',
+        name: 'University of Benin (UNIBEN)',
+        domain: '@uniben.edu',
+        acronym: 'UNIBEN',
+        color: saved.color || '#6B21A8',
+        logo: hasCustomUpload ? saved.logo : (saved.logo || defaultUniben?.logo || ''),
+        tagline: saved.tagline || 'Knowledge and Excellence • Ugbowo, Benin City',
+        country: 'Nigeria',
+        isDefault: false,
+      });
+      return;
+    }
+
+    // Standard school merge
+    const existing = domainMap.get(dom);
+    if (existing) {
+      domainMap.set(dom, {
+        ...existing,
+        ...saved,
+        domain: dom,
+      });
+    } else {
+      domainMap.set(dom, {
+        ...saved,
+        domain: dom,
+      });
+    }
+  });
+
+  return Array.from(domainMap.values());
+};
+
 export function PortalProvider({ children }) {
   // 1. Schools & Logos State (User Request: 10-15 schools + admin logo upload)
   const [schools, setSchools] = useState(() => {
@@ -10,19 +121,7 @@ export function PortalProvider({ children }) {
       const saved = localStorage.getItem('portal_schools');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure UNIBEN and updated UNILAG exist if missing in existing saved storage
-        const hasUniben = parsed.some(s => s.domain.toLowerCase().includes('uniben') || s.name.toLowerCase().includes('benin'));
-        if (!hasUniben) {
-          const uniben = INITIAL_SCHOOLS.find(s => s.id === 'sch-uniben');
-          if (uniben) parsed.unshift(uniben);
-        }
-        // Fix old UNILAG logo acronym if present
-        const unilagIndex = parsed.findIndex(s => s.domain.toLowerCase().includes('unilag'));
-        if (unilagIndex !== -1 && parsed[unilagIndex].logo && parsed[unilagIndex].logo.includes('LAGOS')) {
-          const newUnilag = INITIAL_SCHOOLS.find(s => s.id === 'sch-unilag');
-          if (newUnilag) parsed[unilagIndex].logo = newUnilag.logo;
-        }
-        return parsed;
+        return normalizeSchools(parsed);
       }
       return INITIAL_SCHOOLS;
     } catch (e) {
@@ -126,35 +225,53 @@ export function PortalProvider({ children }) {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('portal_schools', JSON.stringify(schools));
+    try {
+      localStorage.setItem('portal_schools', JSON.stringify(schools));
+    } catch (e) {
+      console.warn('LocalStorage error saving schools:', e);
+    }
   }, [schools]);
 
   useEffect(() => {
-    localStorage.setItem('portal_classes', JSON.stringify(classes));
+    try {
+      localStorage.setItem('portal_classes', JSON.stringify(classes));
+    } catch (e) {}
   }, [classes]);
 
   useEffect(() => {
-    localStorage.setItem('portal_notification_emails', JSON.stringify(notificationEmails));
+    try {
+      localStorage.setItem('portal_notification_emails', JSON.stringify(notificationEmails));
+    } catch (e) {}
   }, [notificationEmails]);
 
   useEffect(() => {
-    localStorage.setItem('portal_submissions', JSON.stringify(submissions));
+    try {
+      localStorage.setItem('portal_submissions', JSON.stringify(submissions));
+    } catch (e) {}
   }, [submissions]);
 
   useEffect(() => {
-    localStorage.setItem('portal_delivery_logs', JSON.stringify(deliveryLogs));
+    try {
+      localStorage.setItem('portal_delivery_logs', JSON.stringify(deliveryLogs));
+    } catch (e) {}
   }, [deliveryLogs]);
 
   useEffect(() => {
-    localStorage.setItem('portal_admin_credentials', JSON.stringify(adminCredentials));
+    try {
+      localStorage.setItem('portal_admin_credentials', JSON.stringify(adminCredentials));
+    } catch (e) {}
   }, [adminCredentials]);
 
   useEffect(() => {
-    localStorage.setItem('portal_admin_auth', String(isAdminAuthenticated));
+    try {
+      localStorage.setItem('portal_admin_auth', String(isAdminAuthenticated));
+    } catch (e) {}
   }, [isAdminAuthenticated]);
 
   useEffect(() => {
-    localStorage.setItem('portal_redirect_config', JSON.stringify(redirectConfig));
+    try {
+      localStorage.setItem('portal_redirect_config', JSON.stringify(redirectConfig));
+    } catch (e) {}
   }, [redirectConfig]);
 
   // URL query parameter support for direct class links (e.g. ?class=BIO-201) & admin access (?admin=true or #admin)
@@ -195,48 +312,77 @@ export function PortalProvider({ children }) {
 
   // Dynamic School Detection Helper: looks up matching school by email domain
   const findSchoolByEmail = (email) => {
-    if (!email || !email.includes('@')) return null;
+    if (!email) return null;
 
-    const lowerEmail = email.toLowerCase().trim();
-    const parts = lowerEmail.split('@');
-    if (parts.length < 2 || !parts[1]) return null;
+    const lower = email.toLowerCase().trim();
+    if (!lower.includes('@')) return null;
+
+    const parts = lower.split('@');
+    if (parts.length < 2) return null;
 
     const rawDomain = parts[1].trim(); // e.g. "unilag.edu.ng" or "uniben.edu"
+    if (!rawDomain) return null;
+
     const domainWithAt = '@' + rawDomain;
 
-    // 1. Exact match on registered domain (e.g. "@unilag.edu.ng" or "@uniben.edu")
-    let match = schools.find(s => s.domain.toLowerCase() === domainWithAt);
+    // 1. Direct exact match on domain (e.g. "@unilag.edu.ng" or "@uniben.edu")
+    let match = schools.find(s => s.domain?.toLowerCase() === domainWithAt);
     if (match) return match;
 
-    // 2. Suffix match (e.g. student@live.unilag.edu.ng matches @unilag.edu.ng)
-    match = schools.find(s => lowerEmail.endsWith(s.domain.toLowerCase()));
+    // 2. Full email endsWith school domain
+    match = schools.find(s => lower.endsWith(s.domain?.toLowerCase()));
     if (match) return match;
 
-    // 3. Domain keyword match (e.g. "unilag" in "unilag.edu" / "unilag.edu.ng", or "uniben" in "uniben.edu" / "uniben.edu.ng")
-    const domainKeyword = rawDomain.split('.')[0]; // e.g. "unilag" or "uniben"
-    if (domainKeyword && domainKeyword.length >= 3) {
+    // 3. Institution Keyword Aliases (Handles Nigerian domains & subdomains)
+    // UNILAG: student@unilag.edu.ng, @unilag.edu, @unilag
+    if (rawDomain.includes('unilag')) {
+      match = schools.find(s => 
+        s.domain?.toLowerCase().includes('unilag') || 
+        s.acronym?.toLowerCase() === 'unilag' ||
+        s.name?.toLowerCase().includes('lagos')
+      );
+      if (match) return match;
+    }
+
+    // UNIBEN: student@uniben.edu, student@uniben.edu.ng, @uniben
+    if (rawDomain.includes('uniben')) {
+      match = schools.find(s => 
+        s.domain?.toLowerCase().includes('uniben') || 
+        s.acronym?.toLowerCase() === 'uniben' ||
+        s.name?.toLowerCase().includes('benin')
+      );
+      if (match) return match;
+    }
+
+    // 4. Keyword / Root Domain Match (e.g. "school1" in "school1.edu", "mit" in "mit.edu")
+    const domainRoot = rawDomain.split('.')[0]; // e.g. "unilag", "uniben", "school1"
+    if (domainRoot && domainRoot.length >= 3) {
       match = schools.find(s => {
-        const sKeyword = s.domain.replace('@', '').split('.')[0];
-        return sKeyword === domainKeyword || s.acronym?.toLowerCase() === domainKeyword;
+        const sRoot = s.domain?.replace('@', '').split('.')[0]?.toLowerCase();
+        return (
+          sRoot === domainRoot ||
+          s.acronym?.toLowerCase() === domainRoot ||
+          s.name?.toLowerCase().includes(domainRoot)
+        );
       });
       if (match) return match;
     }
 
-    // 4. Partial match if user is still typing (e.g. "@uniben" or "@unilag" or "@school1")
-    match = schools.find(s => s.domain.toLowerCase().startsWith(domainWithAt));
+    // 5. Partial typing match (e.g. user typed "@school1" or "@unil")
+    match = schools.find(s => s.domain?.toLowerCase().startsWith(domainWithAt));
     if (match) return match;
 
-    // 5. Inverted contains check (if school domain contains the input or vice-versa)
+    // 6. Inverted contains check
     match = schools.find(s => {
-      const cleanSchoolDomain = s.domain.replace('@', '');
-      return rawDomain.includes(cleanSchoolDomain) || cleanSchoolDomain.includes(rawDomain);
+      const cleanSchoolDomain = s.domain?.replace('@', '').toLowerCase();
+      return cleanSchoolDomain && (rawDomain.includes(cleanSchoolDomain) || cleanSchoolDomain.includes(rawDomain));
     });
     if (match) return match;
 
     return null;
   };
 
-  // Admin School Management: Add New School with custom logo
+  // Admin School Management: Add New School with custom logo (or update existing if domain matches)
   const addSchool = (schoolData) => {
     const name = schoolData.name.trim();
     let domain = schoolData.domain.trim().toLowerCase();
@@ -244,9 +390,33 @@ export function PortalProvider({ children }) {
       domain = '@' + domain;
     }
 
-    if (schools.some(s => s.domain.toLowerCase() === domain)) {
-      showToast(`A school with domain "${domain}" already exists!`, 'error');
-      return false;
+    // Check if school already exists by domain or acronym
+    const existingIndex = schools.findIndex(
+      s => s.domain.toLowerCase() === domain || 
+           (schoolData.acronym && s.acronym?.toLowerCase() === schoolData.acronym.trim().toLowerCase())
+    );
+
+    if (existingIndex !== -1) {
+      // Update existing school with the new logo and details
+      const existing = schools[existingIndex];
+      const updatedSchool = {
+        ...existing,
+        name: name || existing.name,
+        domain: domain,
+        acronym: (schoolData.acronym || existing.acronym || name.slice(0, 4)).toUpperCase().trim(),
+        color: schoolData.color || existing.color,
+        logo: schoolData.logo || existing.logo,
+        tagline: schoolData.tagline?.trim() || existing.tagline,
+      };
+
+      setSchools(prev => {
+        const next = [...prev];
+        next[existingIndex] = updatedSchool;
+        try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
+      showToast(`Updated "${updatedSchool.name}" with new logo & profile!`, 'success');
+      return updatedSchool;
     }
 
     const newSchool = {
@@ -262,15 +432,19 @@ export function PortalProvider({ children }) {
       createdAt: new Date().toISOString(),
     };
 
-    setSchools(prev => [newSchool, ...prev]);
+    setSchools(prev => {
+      const next = [newSchool, ...prev];
+      try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
     showToast(`Added school "${newSchool.name}" (${newSchool.domain})!`, 'success');
     return newSchool;
   };
 
-  // Admin School Management: Update School
+  // Admin School Management: Update School & immediately persist
   const updateSchool = (id, updatedData) => {
-    setSchools(prev =>
-      prev.map(s => {
+    setSchools(prev => {
+      const next = prev.map(s => {
         if (s.id === id) {
           let domain = updatedData.domain ? updatedData.domain.trim().toLowerCase() : s.domain;
           if (domain && !domain.startsWith('@')) domain = '@' + domain;
@@ -281,9 +455,15 @@ export function PortalProvider({ children }) {
           };
         }
         return s;
-      })
-    );
-    showToast('School profile updated successfully!', 'success');
+      });
+      try {
+        localStorage.setItem('portal_schools', JSON.stringify(next));
+      } catch (err) {
+        console.warn('LocalStorage error saving updated school:', err);
+      }
+      return next;
+    });
+    showToast('School profile and logo updated successfully!', 'success');
     return true;
   };
 
@@ -293,9 +473,22 @@ export function PortalProvider({ children }) {
       showToast('You must have at least one school profile registered.', 'error');
       return false;
     }
-    setSchools(prev => prev.filter(s => s.id !== id));
+    setSchools(prev => {
+      const next = prev.filter(s => s.id !== id);
+      try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
     showToast('School profile removed.', 'info');
     return true;
+  };
+
+  // Admin School Management: Reset to Clean Default Schools & Official Logos
+  const resetSchoolsToDefault = () => {
+    setSchools(INITIAL_SCHOOLS);
+    try {
+      localStorage.setItem('portal_schools', JSON.stringify(INITIAL_SCHOOLS));
+    } catch (e) {}
+    showToast('Reset all schools and logos to official defaults!', 'success');
   };
 
   // Admin Authentication Methods
@@ -384,75 +577,67 @@ export function PortalProvider({ children }) {
       setDeliveryLogs(prev => [logEntry, ...prev]);
     }
 
-    // Determine target redirect URL: class specific URL -> global default redirect URL -> class login page
-    const finalRedirectUrl = targetClass.redirectUrl?.trim() || redirectConfig.defaultRedirectUrl?.trim() || '';
+    // Determine redirect destination
+    const destinationUrl = targetClass.redirectUrl?.trim() || redirectConfig.defaultRedirectUrl?.trim() || '';
 
-    // Trigger Welcome Screen with redirect countdown & school logo!
+    // Trigger Student Welcome Screen with School Logo & Countdown Redirect
     setStudentWelcomeState({
-      active: true,
       regNo: newRecord.regNo,
       schoolEmail: newRecord.schoolEmail,
       schoolName: newRecord.schoolName,
       schoolLogo: newRecord.schoolLogo,
       classCode: targetClass.code,
       className: targetClass.name,
-      redirectUrl: finalRedirectUrl,
+      redirectUrl: destinationUrl,
       delaySeconds: redirectConfig.redirectDelaySeconds || 3,
       welcomeMessage: redirectConfig.welcomeMessage || 'Welcome! Your student session has been authenticated successfully.',
     });
-
-    showToast(`Welcome ${newRecord.regNo}! Redirecting...`, 'success');
-    return newRecord;
   };
 
-  // Reset Student Welcome Screen
   const clearStudentWelcome = () => {
     setStudentWelcomeState(null);
   };
 
-  // Admin: Delete Submission
-  const deleteSubmission = (id) => {
-    setSubmissions(prev => prev.filter(item => item.id !== id));
-    showToast(`Captured record #${id} removed.`, 'info');
-  };
-
-  // Admin: Add Notification Email
-  const addNotificationEmail = (email, label = 'Staff Recipient', isPrimary = false) => {
+  // Admin Notification Email Management
+  const addNotificationEmail = (email) => {
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       showToast('Please enter a valid email address.', 'error');
       return false;
     }
+
     if (notificationEmails.some(e => e.email.toLowerCase() === cleanEmail)) {
-      showToast('This email is already in the notification list.', 'error');
+      showToast('This email is already in the recipient list.', 'error');
       return false;
     }
 
     const newEntry = {
-      id: `notif-${Date.now()}`,
+      id: `ntf-${Date.now()}`,
       email: cleanEmail,
-      label: label.trim() || 'Staff Recipient',
-      isPrimary: Boolean(isPrimary),
-      addedAt: new Date().toISOString(),
       active: true,
+      addedAt: new Date().toISOString(),
     };
 
     setNotificationEmails(prev => [newEntry, ...prev]);
-    showToast(`Added ${cleanEmail} to admin notification list!`, 'success');
+    showToast(`Added ${cleanEmail} to notification recipients!`, 'success');
     return true;
   };
 
-  // Admin: Remove Notification Email
   const removeNotificationEmail = (id) => {
     setNotificationEmails(prev => prev.filter(e => e.id !== id));
-    showToast('Notification email removed.', 'info');
+    showToast('Email removed from notification list.', 'info');
   };
 
-  // Admin: Toggle Email Active
   const toggleNotificationEmail = (id) => {
     setNotificationEmails(prev =>
       prev.map(e => (e.id === id ? { ...e, active: !e.active } : e))
     );
+  };
+
+  // Admin: Delete Submission record
+  const deleteSubmission = (id) => {
+    setSubmissions(prev => prev.filter(s => s.id !== id));
+    showToast('Record deleted.', 'info');
   };
 
   // Admin: Generate / Add New Class Portal
@@ -519,6 +704,7 @@ export function PortalProvider({ children }) {
         addSchool,
         updateSchool,
         deleteSchool,
+        resetSchoolsToDefault,
         findSchoolByEmail,
         classes,
         addClass,
