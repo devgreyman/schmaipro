@@ -141,11 +141,15 @@ export function PortalProvider({ children }) {
     localStorage.setItem('portal_redirect_config', JSON.stringify(redirectConfig));
   }, [redirectConfig]);
 
-  // URL query parameter support for direct class links (e.g. ?class=BIO-201)
+  // URL query parameter support for direct class links (e.g. ?class=BIO-201) & admin access (?admin=true or #admin)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const classParam = params.get('class');
-    if (classParam) {
+    const adminParam = params.get('admin');
+
+    if (adminParam === 'true' || window.location.hash === '#admin') {
+      setCurrentView('admin');
+    } else if (classParam) {
       const exists = classes.find(c => c.code.toLowerCase() === classParam.toLowerCase());
       if (exists) {
         setSelectedClassCode(exists.code);
@@ -153,6 +157,18 @@ export function PortalProvider({ children }) {
       }
     }
   }, [classes]);
+
+  // Keyboard shortcut for administrator: Ctrl+Shift+A or Alt+A to open Admin Console
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'a' || e.key === 'A'))) {
+        e.preventDefault();
+        setCurrentView(prev => (prev === 'admin' ? 'student' : 'admin'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Toast Notification helper
   const showToast = (text, type = 'success') => {

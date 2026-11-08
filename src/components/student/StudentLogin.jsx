@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function StudentLogin() {
-  const { classes, selectedClassCode, setSelectedClassCode, processStudentLogin, findSchoolByEmail, schools, showToast } = usePortal();
+  const { classes, selectedClassCode, setSelectedClassCode, processStudentLogin, findSchoolByEmail, schools, setCurrentView, isAdminAuthenticated, showToast } = usePortal();
 
   const currentClass = classes.find(c => c.code === selectedClassCode) || classes[0];
 
@@ -23,6 +23,18 @@ export default function StudentLogin() {
   const [fullName, setFullName] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [validationError, setValidationError] = useState('');
+  const [adminClicks, setAdminClicks] = useState(0);
+
+  const handleSecretAdminAccess = () => {
+    setAdminClicks(prev => {
+      const next = prev + 1;
+      if (next >= 3) {
+        setCurrentView('admin');
+        return 0;
+      }
+      return next;
+    });
+  };
 
   // Dynamic School Detection based on user input
   const detectedSchool = findSchoolByEmail(schoolEmail);
@@ -303,9 +315,23 @@ export default function StudentLogin() {
 
       </div>
 
-      <div className="mt-6 text-xs text-slate-400 text-center">
-        <span>EduPortal Educational Platform • Multi-School Auto Detection</span>
+      <div 
+        onClick={handleSecretAdminAccess}
+        className="mt-6 text-xs text-slate-400 text-center select-none cursor-default"
+        title={isAdminAuthenticated ? "Click to return to Admin Console" : ""}
+      >
+        <span>EduPortal Educational Platform</span>
       </div>
+
+      {/* Discreet Admin Return Button if already signed in as admin */}
+      {isAdminAuthenticated && (
+        <button
+          onClick={() => setCurrentView('admin')}
+          className="fixed bottom-4 right-4 bg-slate-900/80 hover:bg-slate-900 text-white text-[11px] font-mono px-3 py-1.5 rounded-xl border border-slate-700 shadow-lg flex items-center gap-1.5 transition-all"
+        >
+          <span>Admin Console</span>
+        </button>
+      )}
 
     </div>
   );
