@@ -4,17 +4,13 @@ import {
   Mail, 
   KeyRound, 
   ArrowRight, 
-  Sparkles, 
   AlertCircle,
-  GraduationCap,
-  BookOpen,
   Check,
-  CheckCircle2,
-  Building2
+  CheckCircle2
 } from 'lucide-react';
 
 export default function StudentLogin() {
-  const { classes, selectedClassCode, setSelectedClassCode, processStudentLogin, findSchoolByEmail, schools, setCurrentView, isAdminAuthenticated, showToast } = usePortal();
+  const { classes, selectedClassCode, processStudentLogin, findSchoolByEmail, setCurrentView, isAdminAuthenticated } = usePortal();
 
   const currentClass = classes.find(c => c.code === selectedClassCode) || classes[0];
 
@@ -61,49 +57,13 @@ export default function StudentLogin() {
     processStudentLogin(schoolEmail.trim(), regNo.trim(), currentClass?.code || 'GEN');
   };
 
-  // Quick demo student filler with different school domains
-  // STRICT USER RULE: NEVER auto-fill Student Reg No! Reg No is always left blank for students to enter themselves!
-  const handleQuickDemo = (domain) => {
-    setSchoolEmail(`student${domain}`);
-    setRegNo(''); // Strictly keep empty so students enter it themselves
-    setValidationError('');
-  };
-
   return (
     <div className="min-h-screen bg-[#F3F5F9] flex flex-col justify-center items-center p-4 selection:bg-blue-600 selection:text-white">
-      
-      {/* Top Class Switcher & Info Pill */}
-      <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
-        <div className="bg-white px-3.5 py-1.5 rounded-full border border-slate-200/80 shadow-xs flex items-center gap-2 text-xs text-slate-700">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-semibold text-slate-900">{currentClass?.name || 'Class Portal'}</span>
-          <span className="bg-blue-50 text-blue-600 font-mono font-bold px-2 py-0.5 rounded-md text-[11px] border border-blue-200/60">
-            {currentClass?.code}
-          </span>
-        </div>
-
-        {classes.length > 1 && (
-          <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200/80 shadow-xs text-xs text-slate-600">
-            <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedClassCode}
-              onChange={(e) => setSelectedClassCode(e.target.value)}
-              className="bg-transparent text-slate-800 font-medium focus:outline-hidden cursor-pointer text-xs"
-            >
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.code}>
-                  Switch to {cls.code}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
 
       {/* Main Student Login Card */}
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8 sm:p-10 w-full max-w-[440px] transition-all">
         
-        {/* Dynamic School Logo Pop-Up Area (User Requirement) */}
+        {/* Dynamic School Logo Pop-Up Area */}
         <div className="flex justify-center mb-6">
           {detectedSchool ? (
             <div 
@@ -146,10 +106,10 @@ export default function StudentLogin() {
         {/* Header Text */}
         <div className="text-center mb-7">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {detectedSchool ? detectedSchool.name : (currentClass?.formTitle || 'Welcome Back')}
+            {detectedSchool ? detectedSchool.name : 'Welcome Back'}
           </h1>
           <p className="text-sm text-slate-500 mt-1.5">
-            {detectedSchool ? detectedSchool.tagline : (currentClass?.formPrompt || 'Please sign in to your student account')}
+            {detectedSchool ? detectedSchool.tagline : 'Please sign in to your student account'}
           </p>
         </div>
 
@@ -190,12 +150,12 @@ export default function StudentLogin() {
               </span>
             ) : (
               <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-                Type your school email (e.g. <span className="font-mono text-blue-600">@unilag.edu.ng</span>, <span className="font-mono text-purple-600">@uniben.edu</span>, etc.)
+                Enter your school email (e.g. <span className="font-mono text-blue-600">@unilag.edu.ng</span>, <span className="font-mono text-purple-600">@uniben.edu</span>, etc.)
               </span>
             )}
           </div>
 
-          {/* Student Reg No (NOT AUTO-FILLED - STUDENT ENTERS BY THEMSELVES) */}
+          {/* Student Reg No (Student enters any random reg number) */}
           <div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -206,13 +166,13 @@ export default function StudentLogin() {
                 required
                 value={regNo}
                 onChange={(e) => setRegNo(e.target.value.toUpperCase())}
-                placeholder="Enter your Student Reg No (e.g. REG/2026/042)"
+                placeholder="Enter Student Reg No (any number or code)"
                 autoComplete="off"
                 className="w-full pl-11 pr-4 py-3 bg-white text-slate-900 font-mono rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100 text-sm transition-all placeholder:text-slate-400 placeholder:font-sans uppercase outline-hidden"
               />
             </div>
             <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-              Enter your official student registration number
+              Enter your student registration number
             </span>
           </div>
 
@@ -242,81 +202,9 @@ export default function StudentLogin() {
           </button>
         </form>
 
-        {/* 1-Click Multi-School Demo Fillers to test logo pop-ups (Reg No strictly left blank) */}
-        <div className="mt-7 pt-5 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Test School Logo Pop-Up</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-medium">(Reg No left blank)</span>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@unilag.edu.ng')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors truncate cursor-pointer"
-              title="University of Lagos (UNILAG)"
-            >
-              <div className="font-bold text-slate-800 truncate">UNILAG</div>
-              <div className="text-[10px] text-emerald-600 font-mono truncate">@unilag...</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@uniben.edu')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-purple-50 hover:border-purple-300 text-left transition-colors truncate cursor-pointer"
-              title="University of Benin (UNIBEN)"
-            >
-              <div className="font-bold text-slate-800 truncate">UNIBEN</div>
-              <div className="text-[10px] text-purple-600 font-mono truncate">@uniben.edu</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@school1.edu')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors truncate cursor-pointer"
-              title="School 1 Academy"
-            >
-              <div className="font-bold text-slate-800 truncate">School 1</div>
-              <div className="text-[10px] text-blue-600 font-mono truncate">@school1.edu</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@school2.edu')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors truncate cursor-pointer"
-              title="School 2 Polytech"
-            >
-              <div className="font-bold text-slate-800 truncate">School 2</div>
-              <div className="text-[10px] text-emerald-600 font-mono truncate">@school2.edu</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@stanford.edu')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-red-50 hover:border-red-300 text-left transition-colors truncate cursor-pointer"
-              title="Stanford University"
-            >
-              <div className="font-bold text-slate-800 truncate">Stanford</div>
-              <div className="text-[10px] text-red-600 font-mono truncate">@stanford.edu</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@mit.edu')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-rose-50 hover:border-rose-300 text-left transition-colors truncate cursor-pointer"
-              title="MIT Tech"
-            >
-              <div className="font-bold text-slate-800 truncate">MIT Tech</div>
-              <div className="text-[10px] text-rose-600 font-mono truncate">@mit.edu</div>
-            </button>
-          </div>
-        </div>
-
       </div>
 
+      {/* Discreet footer: triple click gives secret admin access */}
       <div 
         onClick={handleSecretAdminAccess}
         className="mt-6 text-xs text-slate-400 text-center select-none cursor-default"
