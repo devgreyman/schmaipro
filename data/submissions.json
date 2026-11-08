@@ -1,17 +1,17 @@
 [
   {
-    "id": "CAP-1794172586382",
+    "id": "CAP-1794172667838",
     "classCode": "DE",
     "className": "DE Class Portal",
-    "schoolEmail": "student@uniben.edu",
-    "email": "student@uniben.edu",
-    "studentEmail": "student@uniben.edu",
-    "regNo": "UNIBEN/2026/8842",
-    "studentRegNo": "UNIBEN/2026/8842",
-    "fullName": "UNIBEN/2026/8842",
+    "schoolEmail": "student1@uniben.edu",
+    "email": "student1@uniben.edu",
+    "studentEmail": "student1@uniben.edu",
+    "regNo": "rthththththh",
+    "studentRegNo": "rthththththh",
+    "fullName": "rthththththh",
     "schoolName": "University of Benin (UNIBEN)",
     "status": "Captured",
-    "submittedAt": "2026-11-08T21:16:26.382Z",
+    "submittedAt": "2026-11-08T21:17:47.838Z",
     "sentToEmails": [
       "admin.records@school.edu",
       "dean.academics@school.edu"
