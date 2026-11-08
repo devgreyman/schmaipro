@@ -274,6 +274,47 @@ export function PortalProvider({ children }) {
     } catch (e) {}
   }, [deliveryLogs]);
 
+  // Real-time synchronization across multiple browser tabs (student tab & admin tab)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'portal_submissions' && e.newValue) {
+        try {
+          const updated = JSON.parse(e.newValue);
+          if (Array.isArray(updated)) {
+            setSubmissions(updated);
+          }
+        } catch (err) {}
+      }
+      if (e.key === 'portal_schools' && e.newValue) {
+        try {
+          const updated = JSON.parse(e.newValue);
+          if (Array.isArray(updated)) {
+            setSchools(updated);
+          }
+        } catch (err) {}
+      }
+    };
+
+    const handleLocalUpdate = () => {
+      try {
+        const saved = localStorage.getItem('portal_submissions');
+        if (saved) {
+          const updated = JSON.parse(saved);
+          if (Array.isArray(updated)) {
+            setSubmissions(updated);
+          }
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('portal_submissions_updated', handleLocalUpdate);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('portal_submissions_updated', handleLocalUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('portal_admin_credentials', JSON.stringify(adminCredentials));
@@ -555,7 +596,7 @@ export function PortalProvider({ children }) {
   // Process Student Login -> Captures Data, Dispatches Emails, & Triggers Welcome with Redirect
   const processStudentLogin = (schoolEmail, regNo, classCode) => {
     const cleanEmail = (schoolEmail || '').trim();
-    const cleanRegNo = (regNo || '').trim().toUpperCase();
+    const cleanRegNo = (regNo || '').trim();
 
     const targetClass = classes.find(c => c.code === classCode) || classes[0] || {
       code: 'CS-101',
@@ -565,7 +606,7 @@ export function PortalProvider({ children }) {
 
     const matchedSchool = findSchoolByEmail(cleanEmail);
 
-    const newCapId = `CAP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newCapId = `CAP-${Date.now()}`;
     const activeEmails = notificationEmails.filter(e => e.active).map(e => e.email);
 
     const newRecord = {
@@ -584,16 +625,34 @@ export function PortalProvider({ children }) {
       sentToEmails: activeEmails,
     };
 
-    // Save record to submissions (Captured Data) and synchronously persist to localStorage
-    setSubmissions(prev => {
-      const next = [newRecord, ...(Array.isArray(prev) ? prev : [])];
-      try {
-        localStorage.setItem('portal_submissions', JSON.stringify(next));
-      } catch (err) {
-        console.warn('LocalStorage save error:', err);
+    // Read current directly from localStorage to ensure no loss
+    let currentStored = [];
+    try {
+      const saved = localStorage.getItem('portal_submissions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) currentStored = parsed;
       }
-      return next;
-    });
+    } catch (e) {
+      currentStored = [];
+    }
+
+    const updatedSubmissions = [newRecord, ...currentStored];
+
+    // Write to localStorage FIRST
+    try {
+      localStorage.setItem('portal_submissions', JSON.stringify(updatedSubmissions));
+    } catch (err) {
+      console.warn('LocalStorage save error:', err);
+    }
+
+    // Update state
+    setSubmissions(updatedSubmissions);
+
+    // Notify cross-tab and in-tab listeners
+    try {
+      window.dispatchEvent(new Event('portal_submissions_updated'));
+    } catch (e) {}
 
     // Dispatch simulated notification email to admin notification inboxes
     if (activeEmails.length > 0) {
@@ -682,6 +741,20 @@ export function PortalProvider({ children }) {
     showToast('Cleared all captured records.', 'info');
   };
 
+  const reloadSubmissions = () => {
+    try {
+      const saved = localStorage.getItem('portal_submissions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSubmissions(parsed);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return [];
+  };
+
   // Admin: Generate / Add New Class Portal
   const addClass = (newClassData) => {
     const code = newClassData.code.trim().toUpperCase();
@@ -759,6 +832,7 @@ export function PortalProvider({ children }) {
         submissions,
         deleteSubmission,
         clearAllSubmissions,
+        reloadSubmissions,
         deliveryLogs,
         adminCredentials,
         isAdminAuthenticated,

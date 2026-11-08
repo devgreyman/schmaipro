@@ -21,7 +21,8 @@ import {
   Bell,
   Check,
   Building2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RotateCcw
 } from 'lucide-react';
 import EmailSettings from './EmailSettings';
 import ClassGenerator from './ClassGenerator';
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
     submissions, 
     deleteSubmission,
     clearAllSubmissions,
+    reloadSubmissions,
     classes, 
     schools,
     notificationEmails, 
@@ -46,9 +48,14 @@ export default function AdminDashboard() {
   
   // Responses filtering & search
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClassFilter, setSelectedClassFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [inspectingSubmission, setInspectingSubmission] = useState(null);
+
+  // Reload latest submissions from disk whenever opening the Captured Data tab
+  useEffect(() => {
+    if (activeTab === 'data' && reloadSubmissions) {
+      reloadSubmissions();
+    }
+  }, [activeTab]);
 
   // Statistics calculation
   const totalSubmissions = submissions.length;
@@ -56,19 +63,18 @@ export default function AdminDashboard() {
   const activeClassCount = classes.length;
   const totalSchoolsCount = schools.length;
 
-  // Filter logic for Captured Data
+  // Filter logic for Captured Data: shows ALL records unless search query entered
   const filteredSubmissions = submissions.filter(sub => {
+    if (!sub) return false;
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+
     const reg = (sub.regNo || sub.studentRegNo || sub.fullName || '').toLowerCase();
     const email = (sub.schoolEmail || sub.email || sub.studentEmail || '').toLowerCase();
     const school = (sub.schoolName || '').toLowerCase();
     const subId = (sub.id || '').toLowerCase();
-    const q = searchQuery.toLowerCase().trim();
 
-    const matchesSearch = !q || reg.includes(q) || email.includes(q) || school.includes(q) || subId.includes(q);
-    const matchesClass = selectedClassFilter === 'ALL' || sub.classCode === selectedClassFilter;
-    const matchesStatus = statusFilter === 'ALL' || sub.status === statusFilter;
-
-    return matchesSearch && matchesClass && matchesStatus;
+    return reg.includes(q) || email.includes(q) || school.includes(q) || subId.includes(q);
   });
 
   // Export submissions to CSV
@@ -377,6 +383,18 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (reloadSubmissions) reloadSubmissions();
+                      showToast('Refreshed captured data', 'info');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#161F33] hover:bg-[#1E293B] text-slate-300 border border-[#243048] text-xs font-semibold transition-colors cursor-pointer"
+                    title="Refresh captured data"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Refresh</span>
+                  </button>
+
                   <button
                     onClick={handleExportCSV}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer"
