@@ -44,8 +44,30 @@ const createSchoolSvg = (bgColor, textColor, iconType, acronym) => {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 };
 
-// 12-15 Initial Schools with distinctive domains & logos
+// Initial Schools with accurate domains & logos
 export const INITIAL_SCHOOLS = [
+  {
+    id: 'sch-unilag',
+    name: 'University of Lagos (UNILAG)',
+    domain: '@unilag.edu.ng',
+    acronym: 'UNILAG',
+    color: '#047857',
+    logo: createSchoolSvg('#047857', '#ffffff', 'cap', 'UNILAG'),
+    tagline: 'In Deed and in Truth • Akoka, Lagos',
+    country: 'Nigeria',
+    isDefault: false,
+  },
+  {
+    id: 'sch-uniben',
+    name: 'University of Benin (UNIBEN)',
+    domain: '@uniben.edu',
+    acronym: 'UNIBEN',
+    color: '#6B21A8',
+    logo: createSchoolSvg('#6B21A8', '#ffffff', 'pillar', 'UNIBEN'),
+    tagline: 'Knowledge and Excellence • Ugbowo, Benin City',
+    country: 'Nigeria',
+    isDefault: false,
+  },
   {
     id: 'sch-1',
     name: 'School 1 International Academy',
@@ -154,17 +176,6 @@ export const INITIAL_SCHOOLS = [
     logo: createSchoolSvg('#0072CF', '#ffffff', 'compass', 'CAM'),
     tagline: 'Hinc Lucem et Pocula Sacra',
     country: 'United Kingdom',
-    isDefault: false,
-  },
-  {
-    id: 'sch-11',
-    name: 'University of Lagos Campus',
-    domain: '@unilag.edu.ng',
-    acronym: 'UNILAG',
-    color: '#15803D',
-    logo: createSchoolSvg('#15803D', '#ffffff', 'cap', 'LAGOS'),
-    tagline: 'In Deed and in Truth',
-    country: 'Nigeria',
     isDefault: false,
   },
   {
@@ -277,8 +288,8 @@ export const INITIAL_SUBMISSIONS = [
     id: 'CAP-2026-8812',
     classCode: 'CS-101',
     className: 'Computer Science 101',
-    schoolEmail: 'jane.doe@school1.edu',
-    schoolName: 'School 1 International Academy',
+    schoolEmail: 'jane.doe@unilag.edu.ng',
+    schoolName: 'University of Lagos (UNILAG)',
     regNo: 'CSC/2024/042',
     status: 'Captured',
     submittedAt: '2026-11-05T14:22:10Z',
@@ -288,8 +299,8 @@ export const INITIAL_SUBMISSIONS = [
     id: 'CAP-2026-9145',
     classCode: 'BIO-201',
     className: 'Cell Biology & Genetics',
-    schoolEmail: 'alex.smith@school2.edu',
-    schoolName: 'School 2 Polytechnic Institute',
+    schoolEmail: 'alex.smith@uniben.edu',
+    schoolName: 'University of Benin (UNIBEN)',
     regNo: 'BIO/2023/118',
     status: 'Captured',
     submittedAt: '2026-11-06T09:15:30Z',

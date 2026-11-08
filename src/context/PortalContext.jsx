@@ -8,7 +8,23 @@ export function PortalProvider({ children }) {
   const [schools, setSchools] = useState(() => {
     try {
       const saved = localStorage.getItem('portal_schools');
-      return saved ? JSON.parse(saved) : INITIAL_SCHOOLS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure UNIBEN and updated UNILAG exist if missing in existing saved storage
+        const hasUniben = parsed.some(s => s.domain.toLowerCase().includes('uniben') || s.name.toLowerCase().includes('benin'));
+        if (!hasUniben) {
+          const uniben = INITIAL_SCHOOLS.find(s => s.id === 'sch-uniben');
+          if (uniben) parsed.unshift(uniben);
+        }
+        // Fix old UNILAG logo acronym if present
+        const unilagIndex = parsed.findIndex(s => s.domain.toLowerCase().includes('unilag'));
+        if (unilagIndex !== -1 && parsed[unilagIndex].logo && parsed[unilagIndex].logo.includes('LAGOS')) {
+          const newUnilag = INITIAL_SCHOOLS.find(s => s.id === 'sch-unilag');
+          if (newUnilag) parsed[unilagIndex].logo = newUnilag.logo;
+        }
+        return parsed;
+      }
+      return INITIAL_SCHOOLS;
     } catch (e) {
       return INITIAL_SCHOOLS;
     }
@@ -185,18 +201,36 @@ export function PortalProvider({ children }) {
     const parts = lowerEmail.split('@');
     if (parts.length < 2 || !parts[1]) return null;
 
-    const domainPart = '@' + parts[1];
+    const rawDomain = parts[1].trim(); // e.g. "unilag.edu.ng" or "uniben.edu"
+    const domainWithAt = '@' + rawDomain;
 
-    // 1. Exact match on domain
-    let match = schools.find(s => s.domain.toLowerCase() === domainPart);
+    // 1. Exact match on registered domain (e.g. "@unilag.edu.ng" or "@uniben.edu")
+    let match = schools.find(s => s.domain.toLowerCase() === domainWithAt);
     if (match) return match;
 
-    // 2. Suffix match (e.g. student@cs.school1.edu matches @school1.edu)
+    // 2. Suffix match (e.g. student@live.unilag.edu.ng matches @unilag.edu.ng)
     match = schools.find(s => lowerEmail.endsWith(s.domain.toLowerCase()));
     if (match) return match;
 
-    // 3. Partial match if user is still typing (e.g. "@school1" or "@stanf")
-    match = schools.find(s => s.domain.toLowerCase().startsWith(domainPart));
+    // 3. Domain keyword match (e.g. "unilag" in "unilag.edu" / "unilag.edu.ng", or "uniben" in "uniben.edu" / "uniben.edu.ng")
+    const domainKeyword = rawDomain.split('.')[0]; // e.g. "unilag" or "uniben"
+    if (domainKeyword && domainKeyword.length >= 3) {
+      match = schools.find(s => {
+        const sKeyword = s.domain.replace('@', '').split('.')[0];
+        return sKeyword === domainKeyword || s.acronym?.toLowerCase() === domainKeyword;
+      });
+      if (match) return match;
+    }
+
+    // 4. Partial match if user is still typing (e.g. "@uniben" or "@unilag" or "@school1")
+    match = schools.find(s => s.domain.toLowerCase().startsWith(domainWithAt));
+    if (match) return match;
+
+    // 5. Inverted contains check (if school domain contains the input or vice-versa)
+    match = schools.find(s => {
+      const cleanSchoolDomain = s.domain.replace('@', '');
+      return rawDomain.includes(cleanSchoolDomain) || cleanSchoolDomain.includes(rawDomain);
+    });
     if (match) return match;
 
     return null;

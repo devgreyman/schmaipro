@@ -117,8 +117,8 @@ export default function StudentLogin() {
           {detectedSchool ? (
             <div className="flex flex-col items-center animate-bounce-in">
               <div 
-                className="w-20 h-20 rounded-2xl border-2 border-white shadow-xl flex items-center justify-center p-1.5 overflow-hidden transition-all duration-300 relative group"
-                style={{ backgroundColor: detectedSchool.color || '#2563EB' }}
+                className="w-20 h-20 rounded-2xl border-2 shadow-xl flex items-center justify-center p-2 overflow-hidden transition-all duration-300 bg-white"
+                style={{ borderColor: detectedSchool.color || '#2563EB' }}
               >
                 {detectedSchool.logo ? (
                   <img 
@@ -127,9 +127,12 @@ export default function StudentLogin() {
                     className="w-full h-full object-contain" 
                   />
                 ) : (
-                  <span className="font-mono font-bold text-white text-lg tracking-wider">
+                  <div 
+                    className="w-full h-full rounded-xl flex items-center justify-center font-mono font-bold text-white text-base tracking-wider"
+                    style={{ backgroundColor: detectedSchool.color || '#2563EB' }}
+                  >
                     {detectedSchool.acronym || 'SCH'}
-                  </span>
+                  </div>
                 )}
               </div>
 
@@ -253,6 +256,26 @@ export default function StudentLogin() {
           <div className="grid grid-cols-3 gap-1.5 text-[11px]">
             <button
               type="button"
+              onClick={() => handleQuickDemo('@unilag.edu.ng', 'UNILAG/2026/042')}
+              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors truncate"
+              title="University of Lagos"
+            >
+              <div className="font-bold text-slate-800 truncate">UNILAG</div>
+              <div className="text-[10px] text-emerald-600 font-mono truncate">@unilag...</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('@uniben.edu', 'UNIBEN/2026/118')}
+              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-purple-50 hover:border-purple-300 text-left transition-colors truncate"
+              title="University of Benin"
+            >
+              <div className="font-bold text-slate-800 truncate">UNIBEN</div>
+              <div className="text-[10px] text-purple-600 font-mono truncate">@uniben.edu</div>
+            </button>
+
+            <button
+              type="button"
               onClick={() => handleQuickDemo('@school1.edu', 'SCH1/2026/001')}
               className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors truncate"
               title="School 1 Academy"
@@ -273,16 +296,6 @@ export default function StudentLogin() {
 
             <button
               type="button"
-              onClick={() => handleQuickDemo('@school3.edu', 'SCH3/2026/109')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-purple-50 hover:border-purple-300 text-left transition-colors truncate"
-              title="School 3 College"
-            >
-              <div className="font-bold text-slate-800 truncate">School 3</div>
-              <div className="text-[10px] text-purple-600 font-mono truncate">@school3.edu</div>
-            </button>
-
-            <button
-              type="button"
               onClick={() => handleQuickDemo('@stanford.edu', 'STAN/2026/88')}
               className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-red-50 hover:border-red-300 text-left transition-colors truncate"
               title="Stanford University"
@@ -299,16 +312,6 @@ export default function StudentLogin() {
             >
               <div className="font-bold text-slate-800 truncate">MIT Tech</div>
               <div className="text-[10px] text-rose-600 font-mono truncate">@mit.edu</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('@unilag.edu.ng', 'UNILAG/2026/07')}
-              className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-green-50 hover:border-green-300 text-left transition-colors truncate"
-              title="University of Lagos"
-            >
-              <div className="font-bold text-slate-800 truncate">UniLag</div>
-              <div className="text-[10px] text-green-700 font-mono truncate">@unilag...</div>
             </button>
           </div>
         </div>
