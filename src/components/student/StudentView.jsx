@@ -8,7 +8,7 @@ export default function StudentView() {
 
   return (
     <div className="min-h-screen">
-      {studentWelcomeState?.active ? (
+      {studentWelcomeState ? (
         <StudentWelcome />
       ) : (
         <StudentLogin />

@@ -582,6 +582,7 @@ export function PortalProvider({ children }) {
 
     // Trigger Student Welcome Screen with School Logo & Countdown Redirect
     setStudentWelcomeState({
+      active: true,
       regNo: newRecord.regNo,
       schoolEmail: newRecord.schoolEmail,
       schoolName: newRecord.schoolName,

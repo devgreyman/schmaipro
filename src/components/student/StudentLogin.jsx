@@ -52,24 +52,13 @@ export default function StudentLogin() {
       return;
     }
 
-    // Check allowed domain if class restricts it
-    if (currentClass?.allowedDomain && !schoolEmail.toLowerCase().endsWith(currentClass.allowedDomain.toLowerCase())) {
-      setValidationError(`This class requires a school email ending with "${currentClass.allowedDomain}".`);
-      return;
-    }
-
-    // Student Reg No validation
+    // Student Reg No validation - Allows ANY random reg number entered by the student
     if (!regNo.trim()) {
-      setValidationError('Please enter your Student Registration Number (Reg No).');
+      setValidationError('Please enter your Student Registration Number.');
       return;
     }
 
-    if (regNo.trim().length < 3) {
-      setValidationError('Registration Number must be at least 3 characters.');
-      return;
-    }
-
-    processStudentLogin(schoolEmail, regNo, currentClass?.code || 'GEN');
+    processStudentLogin(schoolEmail.trim(), regNo.trim(), currentClass?.code || 'GEN');
   };
 
   // Quick demo student filler with different school domains
