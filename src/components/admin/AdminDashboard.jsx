@@ -50,10 +50,14 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectingSubmission, setInspectingSubmission] = useState(null);
 
-  // Reload latest submissions from disk whenever opening the Captured Data tab
+  // Reload latest submissions from disk whenever opening the Captured Data tab & live poll
   useEffect(() => {
-    if (activeTab === 'data' && reloadSubmissions) {
+    if (activeTab === 'data' && typeof reloadSubmissions === 'function') {
       reloadSubmissions();
+      const interval = setInterval(() => {
+        reloadSubmissions();
+      }, 2500);
+      return () => clearInterval(interval);
     }
   }, [activeTab]);
 

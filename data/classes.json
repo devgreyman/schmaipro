@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cls-de",
+    "code": "DE",
+    "name": "Data Engineering & Analytics",
+    "department": "Faculty of Computing & Information Tech",
+    "academicYear": "2025/2026",
+    "semester": "1st Semester",
+    "allowedDomain": "",
+    "description": "Data Engineering assignment submission and academic portal.",
+    "formTitle": "Welcome Back",
+    "formPrompt": "Please sign in to your student account",
+    "redirectUrl": "",
+    "createdAt": "2026-11-08T20:00:00Z",
+    "isActive": true
+  },
+  {
+    "id": "cls-cs101",
+    "code": "CS-101",
+    "name": "Computer Science 101",
+    "department": "Faculty of Computing & Information Tech",
+    "academicYear": "2025/2026",
+    "semester": "1st Semester",
+    "allowedDomain": "",
+    "description": "Freshmen introductory course portal for programming fundamentals.",
+    "formTitle": "Welcome Back",
+    "formPrompt": "Please sign in to your student account",
+    "redirectUrl": "",
+    "createdAt": "2026-09-15T09:00:00Z",
+    "isActive": true
+  },
+  {
+    "id": "cls-bio201",
+    "code": "BIO-201",
+    "name": "Cell Biology & Genetics",
+    "department": "School of Biological Sciences",
+    "academicYear": "2025/2026",
+    "semester": "2nd Semester",
+    "allowedDomain": "",
+    "description": "Sophomore biological research and classroom session portal.",
+    "formTitle": "Welcome Back",
+    "formPrompt": "Enter your student credentials to verify your identity",
+    "redirectUrl": "",
+    "createdAt": "2026-10-01T10:30:00Z",
+    "isActive": true
+  },
+  {
+    "id": "cls-eng304",
+    "code": "ENG-304",
+    "name": "Mechanical Systems & Design",
+    "department": "Faculty of Engineering",
+    "academicYear": "2025/2026",
+    "semester": "1st Semester",
+    "allowedDomain": "",
+    "description": "Junior level engineering class portal and lab access.",
+    "formTitle": "Welcome Back",
+    "formPrompt": "Please sign in to your student account",
+    "redirectUrl": "",
+    "createdAt": "2026-10-20T14:15:00Z",
+    "isActive": true
+  }
+]

@@ -315,6 +315,42 @@ export function PortalProvider({ children }) {
     };
   }, []);
 
+  // Fetch persisted data from disk API on startup
+  useEffect(() => {
+    // 1. Initial submissions sync
+    fetch('/api/submissions')
+      .then(res => res.json())
+      .then(serverData => {
+        if (Array.isArray(serverData) && serverData.length > 0) {
+          setSubmissions(prev => {
+            const map = new Map();
+            serverData.forEach(s => { if (s && s.id) map.set(s.id, s); });
+            prev.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
+            const merged = Array.from(map.values());
+            try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+
+    // 2. Initial classes sync
+    fetch('/api/classes')
+      .then(res => res.json())
+      .then(serverClasses => {
+        if (Array.isArray(serverClasses) && serverClasses.length > 0) {
+          setClasses(prev => {
+            const existingCodes = new Set(prev.map(c => c.code.toUpperCase()));
+            const toAdd = serverClasses.filter(c => !existingCodes.has(c.code.toUpperCase()));
+            const merged = [...toAdd, ...prev];
+            try { localStorage.setItem('portal_classes', JSON.stringify(merged)); } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('portal_admin_credentials', JSON.stringify(adminCredentials));
@@ -333,7 +369,7 @@ export function PortalProvider({ children }) {
     } catch (e) {}
   }, [redirectConfig]);
 
-  // URL query parameter support for direct class links (e.g. ?class=BIO-201) & admin access (?admin=true or #admin)
+  // URL query parameter support for direct class links (e.g. ?class=BIO-201, ?class=DE) & admin access (?admin=true or #admin)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const classParam = params.get('class');
@@ -341,12 +377,36 @@ export function PortalProvider({ children }) {
 
     if (adminParam === 'true' || window.location.hash === '#admin') {
       setCurrentView('admin');
-    } else if (classParam) {
-      const exists = classes.find(c => c.code.toLowerCase() === classParam.toLowerCase());
-      if (exists) {
-        setSelectedClassCode(exists.code);
-        setCurrentView('student');
+    } else if (classParam && classParam.trim()) {
+      const targetCode = classParam.trim().toUpperCase();
+      let exists = classes.find(c => c.code.toUpperCase() === targetCode);
+      if (!exists) {
+        exists = {
+          id: `cls-${targetCode.toLowerCase()}`,
+          code: targetCode,
+          name: `${targetCode} Class Portal`,
+          department: 'Academic Class',
+          academicYear: '2025/2026',
+          semester: '1st Semester',
+          allowedDomain: '',
+          description: `Direct class portal for ${targetCode}.`,
+          formTitle: 'Welcome Back',
+          formPrompt: 'Please sign in to your student account',
+          redirectUrl: '',
+          createdAt: new Date().toISOString(),
+          isActive: true,
+        };
+        setClasses(prev => [exists, ...prev]);
+        try {
+          fetch('/api/classes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(exists)
+          }).catch(() => {});
+        } catch (e) {}
       }
+      setSelectedClassCode(targetCode);
+      setCurrentView('student');
     }
   }, [classes]);
 
@@ -649,6 +709,15 @@ export function PortalProvider({ children }) {
     // Update state
     setSubmissions(updatedSubmissions);
 
+    // Save to disk API (synchronizes across all ports, tabs & browsers)
+    try {
+      fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord)
+      }).catch(() => {});
+    } catch (e) {}
+
     // Notify cross-tab and in-tab listeners
     try {
       window.dispatchEvent(new Event('portal_submissions_updated'));
@@ -732,26 +801,60 @@ export function PortalProvider({ children }) {
       try { localStorage.setItem('portal_submissions', JSON.stringify(next)); } catch (e) {}
       return next;
     });
+    try {
+      fetch('/api/submissions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      }).catch(() => {});
+    } catch (e) {}
     showToast('Record deleted.', 'info');
   };
 
   const clearAllSubmissions = () => {
     setSubmissions([]);
     try { localStorage.setItem('portal_submissions', JSON.stringify([])); } catch (e) {}
+    try {
+      fetch('/api/submissions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearAll: true })
+      }).catch(() => {});
+    } catch (e) {}
     showToast('Cleared all captured records.', 'info');
   };
 
   const reloadSubmissions = () => {
+    let local = [];
     try {
       const saved = localStorage.getItem('portal_submissions');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setSubmissions(parsed);
-          return parsed;
-        }
+        if (Array.isArray(parsed)) local = parsed;
       }
     } catch (e) {}
+
+    // Also fetch latest from disk API to merge
+    fetch('/api/submissions')
+      .then(res => res.json())
+      .then(serverSubs => {
+        if (Array.isArray(serverSubs)) {
+          const map = new Map();
+          serverSubs.forEach(s => { if (s && s.id) map.set(s.id, s); });
+          local.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
+          const merged = Array.from(map.values());
+          setSubmissions(merged);
+          try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
+        }
+      })
+      .catch(() => {
+        if (local.length > 0) setSubmissions(local);
+      });
+
+    if (local.length > 0) {
+      setSubmissions(local);
+      return local;
+    }
     return [];
   };
 
@@ -779,7 +882,17 @@ export function PortalProvider({ children }) {
       isActive: true,
     };
 
-    setClasses(prev => [...prev, newClass]);
+    setClasses(prev => [newClass, ...prev]);
+
+    // Save to server API
+    try {
+      fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClass)
+      }).catch(() => {});
+    } catch (e) {}
+
     showToast(`Created class portal for ${newClass.name} (${newClass.code})!`, 'success');
     return newClass;
   };

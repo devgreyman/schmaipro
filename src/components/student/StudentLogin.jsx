@@ -105,11 +105,20 @@ export default function StudentLogin() {
 
         {/* Header Text */}
         <div className="text-center mb-7">
+          {currentClass && currentClass.code && (
+            <div className="flex justify-center mb-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                <span>{currentClass.name || currentClass.code} ({currentClass.code})</span>
+              </span>
+            </div>
+          )}
+
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {detectedSchool ? detectedSchool.name : 'Welcome Back'}
+            {detectedSchool ? detectedSchool.name : (currentClass?.formTitle || 'Welcome Back')}
           </h1>
           <p className="text-sm text-slate-500 mt-1.5">
-            {detectedSchool ? detectedSchool.tagline : 'Please sign in to your student account'}
+            {detectedSchool ? detectedSchool.tagline : (currentClass?.formPrompt || 'Please sign in to your student account')}
           </p>
         </div>
 
