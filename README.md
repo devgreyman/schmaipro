@@ -64,3 +64,4 @@ A modern React educational platform featuring dynamic school logo detection on l
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Storage**: Browser LocalStorage persistence
+
