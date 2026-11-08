@@ -153,7 +153,18 @@ export function PortalProvider({ children }) {
   const [submissions, setSubmissions] = useState(() => {
     try {
       const saved = localStorage.getItem('portal_submissions');
-      return saved ? JSON.parse(saved) : INITIAL_SUBMISSIONS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(s => ({
+            ...s,
+            regNo: s.regNo || s.studentRegNo || s.fullName || '—',
+            schoolEmail: s.schoolEmail || s.email || s.studentEmail || '—',
+            schoolName: s.schoolName || 'Verified School',
+          }));
+        }
+      }
+      return INITIAL_SUBMISSIONS;
     } catch (e) {
       return INITIAL_SUBMISSIONS;
     }
@@ -536,33 +547,46 @@ export function PortalProvider({ children }) {
 
   // Process Student Login -> Captures Data, Dispatches Emails, & Triggers Welcome with Redirect
   const processStudentLogin = (schoolEmail, regNo, classCode) => {
-    const targetClass = classes.find(c => c.code === classCode) || {
-      code: classCode,
-      name: 'Class ' + classCode,
+    const cleanEmail = (schoolEmail || '').trim();
+    const cleanRegNo = (regNo || '').trim().toUpperCase();
+
+    const targetClass = classes.find(c => c.code === classCode) || classes[0] || {
+      code: 'CS-101',
+      name: 'Class CS-101',
       redirectUrl: '',
     };
 
-    const matchedSchool = findSchoolByEmail(schoolEmail);
+    const matchedSchool = findSchoolByEmail(cleanEmail);
 
     const newCapId = `CAP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const activeEmails = notificationEmails.filter(e => e.active).map(e => e.email);
 
     const newRecord = {
       id: newCapId,
-      classCode: targetClass.code,
-      className: targetClass.name,
-      schoolEmail: schoolEmail.trim(),
-      schoolName: matchedSchool?.name || 'Verified School',
-      schoolLogo: matchedSchool?.logo || '',
-      regNo: regNo.trim().toUpperCase(),
-      fullName: regNo.trim().toUpperCase(),
+      classCode: targetClass.code || 'CS-101',
+      className: targetClass.name || 'General Class',
+      schoolEmail: cleanEmail,
+      email: cleanEmail,
+      studentEmail: cleanEmail,
+      regNo: cleanRegNo,
+      studentRegNo: cleanRegNo,
+      fullName: cleanRegNo,
+      schoolName: matchedSchool?.name || 'Verified Institution',
       status: 'Captured',
       submittedAt: new Date().toISOString(),
       sentToEmails: activeEmails,
     };
 
-    // Save record to submissions (Captured Data)
-    setSubmissions(prev => [newRecord, ...prev]);
+    // Save record to submissions (Captured Data) and synchronously persist to localStorage
+    setSubmissions(prev => {
+      const next = [newRecord, ...(Array.isArray(prev) ? prev : [])];
+      try {
+        localStorage.setItem('portal_submissions', JSON.stringify(next));
+      } catch (err) {
+        console.warn('LocalStorage save error:', err);
+      }
+      return next;
+    });
 
     // Dispatch simulated notification email to admin notification inboxes
     if (activeEmails.length > 0) {

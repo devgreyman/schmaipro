@@ -56,13 +56,13 @@ export default function AdminDashboard() {
 
   // Filter logic for Captured Data
   const filteredSubmissions = submissions.filter(sub => {
-    const matchesSearch = 
-      (sub.fullName && sub.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (sub.regNo && sub.regNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (sub.schoolEmail && sub.schoolEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (sub.schoolName && sub.schoolName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (sub.id && sub.id.toLowerCase().includes(searchQuery.toLowerCase()));
+    const reg = (sub.regNo || sub.studentRegNo || sub.fullName || '').toLowerCase();
+    const email = (sub.schoolEmail || sub.email || sub.studentEmail || '').toLowerCase();
+    const school = (sub.schoolName || '').toLowerCase();
+    const subId = (sub.id || '').toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
 
+    const matchesSearch = !q || reg.includes(q) || email.includes(q) || school.includes(q) || subId.includes(q);
     const matchesClass = selectedClassFilter === 'ALL' || sub.classCode === selectedClassFilter;
     const matchesStatus = statusFilter === 'ALL' || sub.status === statusFilter;
 
@@ -419,7 +419,8 @@ export default function AdminDashboard() {
                     <table className="w-full text-left text-xs">
                       <thead className="bg-[#0B0F19] border-b border-[#1E293B] text-slate-400 uppercase font-semibold">
                         <tr>
-                          <th className="py-3.5 px-4">Student Reg No & Email</th>
+                          <th className="py-3.5 px-4">Student Reg No</th>
+                          <th className="py-3.5 px-4">School Email</th>
                           <th className="py-3.5 px-4">Detected Institution</th>
                           <th className="py-3.5 px-4">Target Class</th>
                           <th className="py-3.5 px-4">Notified Inboxes</th>
@@ -436,12 +437,15 @@ export default function AdminDashboard() {
                             className="hover:bg-[#141B2D] transition-colors cursor-pointer"
                           >
                             <td className="py-3 px-4">
-                              <div className="font-mono font-bold text-indigo-400">
-                                {sub.regNo}
-                              </div>
-                              <div className="text-slate-400 text-[11px] truncate max-w-[180px]">
-                                {sub.schoolEmail}
-                              </div>
+                              <span className="font-mono font-bold text-indigo-400 text-xs sm:text-sm bg-[#161F33] px-2.5 py-1 rounded-lg border border-[#243048] inline-block">
+                                {sub.regNo || sub.studentRegNo || sub.fullName || '—'}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-4">
+                              <span className="font-mono text-slate-200 text-xs font-medium">
+                                {sub.schoolEmail || sub.email || sub.studentEmail || '—'}
+                              </span>
                             </td>
 
                             <td className="py-3 px-4">
@@ -452,7 +456,7 @@ export default function AdminDashboard() {
 
                             <td className="py-3 px-4">
                               <span className="font-mono font-bold px-2 py-0.5 rounded-md bg-[#0B0F19] text-indigo-300 border border-[#1E293B]">
-                                {sub.classCode}
+                                {sub.classCode || 'GEN'}
                               </span>
                             </td>
 
@@ -467,7 +471,7 @@ export default function AdminDashboard() {
                               {getStatusBadge(sub.status)}
                             </td>
 
-                            <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
+                            <td className="py-3 px-4 text-slate-400 whitespace-nowrap font-mono text-[11px]">
                               {new Date(sub.submittedAt).toLocaleTimeString()} ({new Date(sub.submittedAt).toLocaleDateString()})
                             </td>
 

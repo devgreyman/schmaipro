@@ -67,11 +67,15 @@ export default function SubmissionModal({ submission, onClose }) {
           <div className="p-4 rounded-2xl bg-[#0B0F19] border border-[#1E293B] grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Student Reg No</span>
-              <span className="font-mono font-bold text-indigo-400 text-base">{submission.regNo}</span>
+              <span className="font-mono font-bold text-indigo-400 text-base">
+                {submission.regNo || submission.studentRegNo || submission.fullName || '—'}
+              </span>
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Official School Email</span>
-              <span className="font-medium text-slate-300 truncate block">{submission.schoolEmail}</span>
+              <span className="font-mono font-medium text-slate-200 truncate block text-sm">
+                {submission.schoolEmail || submission.email || submission.studentEmail || '—'}
+              </span>
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">Detected School</span>

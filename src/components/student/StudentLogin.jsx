@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { usePortal } from '../../context/PortalContext';
-import { 
-  Mail, 
-  KeyRound, 
-  ArrowRight, 
+import {
+  Mail,
+  KeyRound,
+  ArrowRight,
   AlertCircle,
   Check,
   CheckCircle2
@@ -62,26 +62,26 @@ export default function StudentLogin() {
 
       {/* Main Student Login Card */}
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8 sm:p-10 w-full max-w-[440px] transition-all">
-        
+
         {/* Dynamic School Logo Pop-Up Area */}
         <div className="flex justify-center mb-6">
           {detectedSchool ? (
-            <div 
+            <div
               key={detectedSchool.id + '-' + (detectedSchool.logo ? detectedSchool.logo.slice(0, 30) : '')}
               className="flex flex-col items-center animate-bounce-in"
             >
-              <div 
+              <div
                 className="w-20 h-20 rounded-2xl border-2 shadow-xl flex items-center justify-center p-2 overflow-hidden transition-all duration-300 bg-white"
                 style={{ borderColor: detectedSchool.color || '#2563EB' }}
               >
                 {detectedSchool.logo ? (
-                  <img 
-                    src={detectedSchool.logo} 
-                    alt={detectedSchool.name} 
-                    className="w-full h-full object-contain" 
+                  <img
+                    src={detectedSchool.logo}
+                    alt={detectedSchool.name}
+                    className="w-full h-full object-contain"
                   />
                 ) : (
-                  <div 
+                  <div
                     className="w-full h-full rounded-xl flex items-center justify-center font-mono font-bold text-white text-base tracking-wider"
                     style={{ backgroundColor: detectedSchool.color || '#2563EB' }}
                   >
@@ -123,7 +123,7 @@ export default function StudentLogin() {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          
+
           {/* School Email */}
           <div>
             <div className="relative">
@@ -136,11 +136,10 @@ export default function StudentLogin() {
                 value={schoolEmail}
                 onChange={(e) => setSchoolEmail(e.target.value)}
                 placeholder="student@school1.edu"
-                className={`w-full pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl border text-sm transition-all outline-hidden placeholder:text-slate-400 ${
-                  detectedSchool 
-                    ? 'border-blue-500 ring-2 ring-blue-100 font-medium' 
+                className={`w-full pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl border text-sm transition-all outline-hidden placeholder:text-slate-400 ${detectedSchool
+                    ? 'border-blue-500 ring-2 ring-blue-100 font-medium'
                     : 'border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100'
-                }`}
+                  }`}
               />
             </div>
             {detectedSchool ? (
@@ -172,7 +171,7 @@ export default function StudentLogin() {
               />
             </div>
             <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-              Enter your student registration number
+              Enter  registration number
             </span>
           </div>
 
@@ -205,7 +204,7 @@ export default function StudentLogin() {
       </div>
 
       {/* Discreet footer: triple click gives secret admin access */}
-      <div 
+      <div
         onClick={handleSecretAdminAccess}
         className="mt-6 text-xs text-slate-400 text-center select-none cursor-default"
         title={isAdminAuthenticated ? "Click to return to Admin Console" : ""}
