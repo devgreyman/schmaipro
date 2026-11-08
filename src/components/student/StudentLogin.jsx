@@ -160,7 +160,7 @@ export default function StudentLogin() {
               </span>
             ) : (
               <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-                Enter your school email (e.g. <span className="font-mono text-blue-600">@unilag.edu.ng</span>, <span className="font-mono text-purple-600">@uniben.edu</span>, etc.)
+                Enter  email
               </span>
             )}
           </div>
