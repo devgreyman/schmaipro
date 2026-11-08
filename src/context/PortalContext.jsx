@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_CLASSES, INITIAL_NOTIFICATION_EMAILS, INITIAL_SUBMISSIONS, INITIAL_SCHOOLS } from '../mockData';
 
+// Cloud persistence endpoints for cross-device synchronization (works on Vercel & localhost)
+const CLOUD_SUBMISSIONS_URL = 'https://superjsonblob.com/api/jsonBlob/b74953fa-6d2c-433e-9d64-c0f6b67c9e2a';
+const CLOUD_CLASSES_URL = 'https://superjsonblob.com/api/jsonBlob/de755bd7-db58-4963-a529-02028ef50c53';
+
 const PortalContext = createContext(null);
 
 /**
@@ -315,33 +319,49 @@ export function PortalProvider({ children }) {
     };
   }, []);
 
-  // Fetch persisted data from disk API on startup
+  // Fetch persisted data from Cloud Blob & local API on startup
   useEffect(() => {
-    // 1. Initial submissions sync
-    fetch('/api/submissions')
+    // Helper to merge submissions list safely
+    const mergeSubmissions = (newItems) => {
+      if (!Array.isArray(newItems) || newItems.length === 0) return;
+      setSubmissions(prev => {
+        const map = new Map();
+        newItems.forEach(s => { if (s && s.id) map.set(s.id, s); });
+        prev.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
+        const merged = Array.from(map.values());
+        try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
+        return merged;
+      });
+    };
+
+    // 1. Cloud Blob sync (works everywhere: Vercel & localhost)
+    fetch(CLOUD_SUBMISSIONS_URL, { headers: { 'Accept': 'application/json' } })
       .then(res => res.json())
-      .then(serverData => {
-        if (Array.isArray(serverData) && serverData.length > 0) {
-          setSubmissions(prev => {
-            const map = new Map();
-            serverData.forEach(s => { if (s && s.id) map.set(s.id, s); });
-            prev.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
-            const merged = Array.from(map.values());
-            try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
-            return merged;
-          });
+      .then(cloudData => {
+        if (Array.isArray(cloudData?.submissions)) {
+          mergeSubmissions(cloudData.submissions);
         }
       })
       .catch(() => {});
 
-    // 2. Initial classes sync
-    fetch('/api/classes')
+    // 2. Local / serverless API fallback sync
+    fetch('/api/submissions')
       .then(res => res.json())
-      .then(serverClasses => {
-        if (Array.isArray(serverClasses) && serverClasses.length > 0) {
+      .then(serverData => {
+        if (Array.isArray(serverData)) {
+          mergeSubmissions(serverData);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Classes sync (Cloud + API)
+    fetch(CLOUD_CLASSES_URL, { headers: { 'Accept': 'application/json' } })
+      .then(res => res.json())
+      .then(cloudClasses => {
+        if (Array.isArray(cloudClasses?.classes)) {
           setClasses(prev => {
             const existingCodes = new Set(prev.map(c => c.code.toUpperCase()));
-            const toAdd = serverClasses.filter(c => !existingCodes.has(c.code.toUpperCase()));
+            const toAdd = cloudClasses.classes.filter(c => !existingCodes.has(c.code.toUpperCase()));
             const merged = [...toAdd, ...prev];
             try { localStorage.setItem('portal_classes', JSON.stringify(merged)); } catch (e) {}
             return merged;
@@ -709,7 +729,26 @@ export function PortalProvider({ children }) {
     // Update state
     setSubmissions(updatedSubmissions);
 
-    // Save to disk API (synchronizes across all ports, tabs & browsers)
+    // Save to Cloud Blob (synchronizes on Vercel across all devices & browsers)
+    try {
+      fetch(CLOUD_SUBMISSIONS_URL, {
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(cloudData => {
+        const list = Array.isArray(cloudData?.submissions) ? cloudData.submissions : [];
+        const filtered = list.filter(item => item.id !== newRecord.id);
+        const next = [newRecord, ...filtered];
+        return fetch(CLOUD_SUBMISSIONS_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ submissions: next })
+        });
+      })
+      .catch(() => {});
+    } catch (e) {}
+
+    // Save to local / serverless API
     try {
       fetch('/api/submissions', {
         method: 'POST',
@@ -796,11 +835,23 @@ export function PortalProvider({ children }) {
 
   // Admin: Delete Submission record
   const deleteSubmission = (id) => {
+    let next = [];
     setSubmissions(prev => {
-      const next = prev.filter(s => s.id !== id);
+      next = prev.filter(s => s.id !== id);
       try { localStorage.setItem('portal_submissions', JSON.stringify(next)); } catch (e) {}
       return next;
     });
+
+    // Cloud Blob sync
+    try {
+      fetch(CLOUD_SUBMISSIONS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ submissions: next })
+      }).catch(() => {});
+    } catch (e) {}
+
+    // Local / serverless API
     try {
       fetch('/api/submissions', {
         method: 'DELETE',
@@ -814,6 +865,17 @@ export function PortalProvider({ children }) {
   const clearAllSubmissions = () => {
     setSubmissions([]);
     try { localStorage.setItem('portal_submissions', JSON.stringify([])); } catch (e) {}
+    
+    // Cloud Blob sync
+    try {
+      fetch(CLOUD_SUBMISSIONS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ submissions: [] })
+      }).catch(() => {});
+    } catch (e) {}
+
+    // Local / serverless API
     try {
       fetch('/api/submissions', {
         method: 'DELETE',
@@ -834,17 +896,36 @@ export function PortalProvider({ children }) {
       }
     } catch (e) {}
 
-    // Also fetch latest from disk API to merge
+    // Helper to merge and set submissions
+    const applyMerged = (fetched) => {
+      if (!Array.isArray(fetched)) return;
+      setSubmissions(prev => {
+        const map = new Map();
+        fetched.forEach(s => { if (s && s.id) map.set(s.id, s); });
+        local.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
+        prev.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
+        const merged = Array.from(map.values());
+        try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
+        return merged;
+      });
+    };
+
+    // 1. Fetch from Cloud Blob (works across devices on Vercel)
+    fetch(CLOUD_SUBMISSIONS_URL, { headers: { 'Accept': 'application/json' } })
+      .then(res => res.json())
+      .then(cloudData => {
+        if (Array.isArray(cloudData?.submissions)) {
+          applyMerged(cloudData.submissions);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch from local / serverless API
     fetch('/api/submissions')
       .then(res => res.json())
       .then(serverSubs => {
         if (Array.isArray(serverSubs)) {
-          const map = new Map();
-          serverSubs.forEach(s => { if (s && s.id) map.set(s.id, s); });
-          local.forEach(s => { if (s && s.id && !map.has(s.id)) map.set(s.id, s); });
-          const merged = Array.from(map.values());
-          setSubmissions(merged);
-          try { localStorage.setItem('portal_submissions', JSON.stringify(merged)); } catch (e) {}
+          applyMerged(serverSubs);
         }
       })
       .catch(() => {
@@ -891,6 +972,29 @@ export function PortalProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClass)
       }).catch(() => {});
+    } catch (e) {}
+
+    // Save to Cloud Blob (sync across devices on Vercel)
+    try {
+      fetch(CLOUD_CLASSES_URL, { headers: { 'Accept': 'application/json' } })
+        .then(res => res.json())
+        .then(cloudData => {
+          const list = Array.isArray(cloudData?.classes) ? cloudData.classes : [];
+          const existingIndex = list.findIndex(c => c.code.toUpperCase() === newClass.code.toUpperCase());
+          let next;
+          if (existingIndex >= 0) {
+            list[existingIndex] = { ...list[existingIndex], ...newClass };
+            next = list;
+          } else {
+            next = [newClass, ...list];
+          }
+          return fetch(CLOUD_CLASSES_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ classes: next })
+          });
+        })
+        .catch(() => {});
     } catch (e) {}
 
     showToast(`Created class portal for ${newClass.name} (${newClass.code})!`, 'success');

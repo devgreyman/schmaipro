@@ -148,8 +148,8 @@ export default function StudentLogin() {
                 onChange={(e) => setSchoolEmail(e.target.value)}
                 placeholder="student@school1.edu"
                 className={`w-full pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl border text-sm transition-all outline-hidden placeholder:text-slate-400 ${detectedSchool
-                    ? 'border-blue-500 ring-2 ring-blue-100 font-medium'
-                    : 'border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100'
+                  ? 'border-blue-500 ring-2 ring-blue-100 font-medium'
+                  : 'border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100'
                   }`}
               />
             </div>
