@@ -155,18 +155,25 @@ export function PortalProvider({ children }) {
       const saved = localStorage.getItem('portal_submissions');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map(s => ({
-            ...s,
-            regNo: s.regNo || s.studentRegNo || s.fullName || '—',
-            schoolEmail: s.schoolEmail || s.email || s.studentEmail || '—',
-            schoolName: s.schoolName || 'Verified School',
-          }));
+        if (Array.isArray(parsed)) {
+          // Filter out old sample mock entries (CSC/2024/042, BIO/2023/118) from existing localStorage
+          const cleaned = parsed
+            .filter(s => s && s.regNo !== 'CSC/2024/042' && s.regNo !== 'BIO/2023/118' && s.id !== 'CAP-2026-8812' && s.id !== 'CAP-2026-9145')
+            .map(s => ({
+              ...s,
+              regNo: s.regNo || s.studentRegNo || s.fullName || '—',
+              schoolEmail: s.schoolEmail || s.email || s.studentEmail || '—',
+              schoolName: s.schoolName || 'Verified School',
+            }));
+          try {
+            localStorage.setItem('portal_submissions', JSON.stringify(cleaned));
+          } catch (e) {}
+          return cleaned;
         }
       }
-      return INITIAL_SUBMISSIONS;
+      return [];
     } catch (e) {
-      return INITIAL_SUBMISSIONS;
+      return [];
     }
   });
 
@@ -607,10 +614,10 @@ export function PortalProvider({ children }) {
     // Trigger Student Welcome Screen with School Logo & Countdown Redirect
     setStudentWelcomeState({
       active: true,
-      regNo: newRecord.regNo,
-      schoolEmail: newRecord.schoolEmail,
-      schoolName: newRecord.schoolName,
-      schoolLogo: newRecord.schoolLogo,
+      regNo: cleanRegNo,
+      schoolEmail: cleanEmail,
+      schoolName: matchedSchool?.name || 'Verified School',
+      schoolLogo: matchedSchool?.logo || '',
       classCode: targetClass.code,
       className: targetClass.name,
       redirectUrl: destinationUrl,

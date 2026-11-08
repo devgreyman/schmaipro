@@ -282,28 +282,5 @@ export const INITIAL_NOTIFICATION_EMAILS = [
   }
 ];
 
-// Initial captured student records
-export const INITIAL_SUBMISSIONS = [
-  {
-    id: 'CAP-2026-8812',
-    classCode: 'CS-101',
-    className: 'Computer Science 101',
-    schoolEmail: 'jane.doe@unilag.edu.ng',
-    schoolName: 'University of Lagos (UNILAG)',
-    regNo: 'CSC/2024/042',
-    status: 'Captured',
-    submittedAt: '2026-11-05T14:22:10Z',
-    sentToEmails: ['admin.records@school.edu', 'dean.academics@school.edu'],
-  },
-  {
-    id: 'CAP-2026-9145',
-    classCode: 'BIO-201',
-    className: 'Cell Biology & Genetics',
-    schoolEmail: 'alex.smith@uniben.edu',
-    schoolName: 'University of Benin (UNIBEN)',
-    regNo: 'BIO/2023/118',
-    status: 'Captured',
-    submittedAt: '2026-11-06T09:15:30Z',
-    sentToEmails: ['admin.records@school.edu'],
-  }
-];
+// Initial captured student records (empty by default; populated as students sign in)
+export const INITIAL_SUBMISSIONS = [];
