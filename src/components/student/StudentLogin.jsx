@@ -164,10 +164,10 @@ export default function StudentLogin() {
                 type="text"
                 required
                 value={regNo}
-                onChange={(e) => setRegNo(e.target.value.toUpperCase())}
-                placeholder="Enter Student Reg No (any number or code)"
+                onChange={(e) => setRegNo(e.target.value)}
+                placeholder="Enter Student Reg No (e.g. 1042, UNIBEN/88, or any code)"
                 autoComplete="off"
-                className="w-full pl-11 pr-4 py-3 bg-white text-slate-900 font-mono rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100 text-sm transition-all placeholder:text-slate-400 placeholder:font-sans uppercase outline-hidden"
+                className="w-full pl-11 pr-4 py-3 bg-white text-slate-900 font-mono rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-100 text-sm transition-all placeholder:text-slate-400 placeholder:font-sans outline-hidden"
               />
             </div>
             <span className="text-[10px] text-slate-400 ml-1 mt-1 block">

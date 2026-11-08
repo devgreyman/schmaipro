@@ -661,8 +661,18 @@ export function PortalProvider({ children }) {
 
   // Admin: Delete Submission record
   const deleteSubmission = (id) => {
-    setSubmissions(prev => prev.filter(s => s.id !== id));
+    setSubmissions(prev => {
+      const next = prev.filter(s => s.id !== id);
+      try { localStorage.setItem('portal_submissions', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
     showToast('Record deleted.', 'info');
+  };
+
+  const clearAllSubmissions = () => {
+    setSubmissions([]);
+    try { localStorage.setItem('portal_submissions', JSON.stringify([])); } catch (e) {}
+    showToast('Cleared all captured records.', 'info');
   };
 
   // Admin: Generate / Add New Class Portal
@@ -741,6 +751,7 @@ export function PortalProvider({ children }) {
         sendTestEmail,
         submissions,
         deleteSubmission,
+        clearAllSubmissions,
         deliveryLogs,
         adminCredentials,
         isAdminAuthenticated,
