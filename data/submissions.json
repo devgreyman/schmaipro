@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "CAP-1794172586382",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "student@uniben.edu",
+    "email": "student@uniben.edu",
+    "studentEmail": "student@uniben.edu",
+    "regNo": "UNIBEN/2026/8842",
+    "studentRegNo": "UNIBEN/2026/8842",
+    "fullName": "UNIBEN/2026/8842",
+    "schoolName": "University of Benin (UNIBEN)",
+    "status": "Captured",
+    "submittedAt": "2026-11-08T21:16:26.382Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  }
+]

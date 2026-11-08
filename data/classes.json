@@ -2,16 +2,16 @@
   {
     "id": "cls-de",
     "code": "DE",
-    "name": "Data Engineering & Analytics",
-    "department": "Faculty of Computing & Information Tech",
+    "name": "DE Class Portal",
+    "department": "Academic Class",
     "academicYear": "2025/2026",
     "semester": "1st Semester",
     "allowedDomain": "",
-    "description": "Data Engineering assignment submission and academic portal.",
+    "description": "Direct class portal for DE.",
     "formTitle": "Welcome Back",
     "formPrompt": "Please sign in to your student account",
     "redirectUrl": "",
-    "createdAt": "2026-11-08T20:00:00Z",
+    "createdAt": "2026-11-08T21:16:22.719Z",
     "isActive": true
   },
   {
