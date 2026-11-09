@@ -9,9 +9,9 @@
     "allowedDomain": "",
     "description": "Direct class portal for DE.",
     "formTitle": "Welcome Back",
-    "formPrompt": "Please sign in to your student account",
+    "formPrompt": "",
     "redirectUrl": "",
-    "createdAt": "2026-11-09T07:11:45.105Z",
+    "createdAt": "2026-11-09T07:30:42.074Z",
     "isActive": true
   },
   {
@@ -24,7 +24,7 @@
     "allowedDomain": "",
     "description": "Freshmen introductory course portal for programming fundamentals.",
     "formTitle": "Welcome Back",
-    "formPrompt": "Please sign in to your student account",
+    "formPrompt": "",
     "redirectUrl": "",
     "createdAt": "2026-09-15T09:00:00Z",
     "isActive": true
@@ -39,7 +39,7 @@
     "allowedDomain": "",
     "description": "Sophomore biological research and classroom session portal.",
     "formTitle": "Welcome Back",
-    "formPrompt": "Enter your student credentials to verify your identity",
+    "formPrompt": "",
     "redirectUrl": "",
     "createdAt": "2026-10-01T10:30:00Z",
     "isActive": true
@@ -54,7 +54,7 @@
     "allowedDomain": "",
     "description": "Junior level engineering class portal and lab access.",
     "formTitle": "Welcome Back",
-    "formPrompt": "Please sign in to your student account",
+    "formPrompt": "",
     "redirectUrl": "",
     "createdAt": "2026-10-20T14:15:00Z",
     "isActive": true

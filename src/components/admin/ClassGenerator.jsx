@@ -25,7 +25,7 @@ export default function ClassGenerator() {
   const [name, setName] = useState('');
   const [template, setTemplate] = useState('Computer Science & IT');
   const [welcomeHeader, setWelcomeHeader] = useState('Welcome Back');
-  const [subtitleInstruction, setSubtitleInstruction] = useState('Please sign in to your student account');
+  const [subtitleInstruction, setSubtitleInstruction] = useState('');
   const [allowedDomain, setAllowedDomain] = useState('@school.edu');
   const [adminEmail, setAdminEmail] = useState('');
   const [redirectUrl, setRedirectUrl] = useState('');
@@ -60,7 +60,7 @@ export default function ClassGenerator() {
       allowedDomain: allowedDomain.trim(),
       description: `Official class submission portal for ${classTitle}.`,
       formTitle: welcomeHeader.trim() || 'Welcome Back',
-      formPrompt: subtitleInstruction.trim() || 'Please sign in to your student account',
+      formPrompt: subtitleInstruction.trim() || '',
       redirectUrl: redirectUrl.trim(),
     });
 
@@ -251,7 +251,7 @@ export default function ClassGenerator() {
                 type="text"
                 value={subtitleInstruction}
                 onChange={(e) => setSubtitleInstruction(e.target.value)}
-                placeholder="Please sign in to your student account"
+                placeholder="e.g. Please enter your credentials"
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl bg-[#0B0F19] border border-[#1E293B] focus:border-indigo-500 text-white placeholder:text-slate-600 outline-hidden transition-all"
               />
             </div>
