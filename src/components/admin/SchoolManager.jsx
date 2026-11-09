@@ -115,7 +115,7 @@ export default function SchoolManager() {
       acronym: acronym || name.slice(0, 6).toUpperCase(),
       color,
       logo: logoPreview,
-      tagline: tagline || 'Official Academic Institution',
+      tagline: tagline.trim() || '',
     });
 
     if (created) {

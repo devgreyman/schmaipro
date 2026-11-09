@@ -615,7 +615,7 @@ export function PortalProvider({ children }) {
       acronym: (schoolData.acronym || name.slice(0, 4)).toUpperCase().trim(),
       color: schoolData.color || '#3B66F5',
       logo: schoolData.logo || '', // Base64 data URL or image link
-      tagline: schoolData.tagline?.trim() || 'Verified Academic Institution',
+      tagline: schoolData.tagline?.trim() || '',
       country: schoolData.country?.trim() || 'International',
       isDefault: false,
       createdAt: new Date().toISOString(),

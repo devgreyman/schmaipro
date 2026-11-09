@@ -4,6 +4,14 @@ const TARGET_PORT = 5173;
 const PROXY_PORT = 5174;
 
 const server = http.createServer((clientReq, clientRes) => {
+  clientReq.on('error', (err) => {
+    // Client aborted or reset connection
+  });
+
+  clientRes.on('error', (err) => {
+    // Client connection error
+  });
+
   const options = {
     hostname: '127.0.0.1',
     port: TARGET_PORT,
@@ -18,11 +26,14 @@ const server = http.createServer((clientReq, clientRes) => {
   const proxyReq = http.request(options, (proxyRes) => {
     clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(clientRes, { end: true });
+    proxyRes.on('error', () => {});
   });
 
   proxyReq.on('error', (err) => {
-    clientRes.writeHead(502, { 'Content-Type': 'text/plain' });
-    clientRes.end(`Port Forwarder Error: ${err.message}`);
+    if (!clientRes.headersSent) {
+      clientRes.writeHead(502, { 'Content-Type': 'text/plain' });
+      clientRes.end(`Port Forwarder Error: ${err.message}`);
+    }
   });
 
   clientReq.pipe(proxyReq, { end: true });
@@ -30,6 +41,10 @@ const server = http.createServer((clientReq, clientRes) => {
 
 // Proxy WebSocket upgrade requests (for Vite HMR)
 server.on('upgrade', (req, socket, head) => {
+  socket.on('error', () => {
+    socket.destroy();
+  });
+
   const proxyReq = http.request({
     hostname: '127.0.0.1',
     port: TARGET_PORT,
@@ -39,6 +54,11 @@ server.on('upgrade', (req, socket, head) => {
   });
 
   proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+    proxySocket.on('error', () => {
+      proxySocket.destroy();
+      socket.destroy();
+    });
+
     socket.write(
       `HTTP/1.1 101 Switching Protocols\r\n` +
       Object.entries(proxyRes.headers)
@@ -55,6 +75,10 @@ server.on('upgrade', (req, socket, head) => {
   });
 
   proxyReq.end();
+});
+
+process.on('uncaughtException', (err) => {
+  console.warn('Forwarder ignored uncaught exception:', err.message);
 });
 
 server.on('error', (err) => {

@@ -1,33 +1,18 @@
 [
   {
-    "id": "sch-unilag",
-    "name": "UNILAG",
-    "domain": "@unilag.edu.ng",
-    "acronym": "UNILAG",
-    "color": "#047857",
-    "logo": "data:image/png;base64,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",
-    "tagline": "In Deed and in Truth • Akoka, Lagos",
-    "country": "Nigeria",
-    "isDefault": false,
-    "domains": [
-      "@unilag.edu.ng",
-      "@unilag.edu"
-    ]
-  },
-  {
     "id": "sch-uniben",
     "name": "University of Benin (UNIBEN)",
     "domain": "@uniben.edu",
+    "domains": [
+      "@uniben.edu",
+      "@uniben.edu.ng"
+    ],
     "acronym": "UNIBEN",
     "color": "#6B21A8",
     "logo": "/logos/uniben-logo.png",
     "tagline": "Knowledge and Excellence • Ugbowo, Benin City",
     "country": "Nigeria",
-    "isDefault": false,
-    "domains": [
-      "@uniben.edu",
-      "@uniben.edu.ng"
-    ]
+    "isDefault": false
   },
   {
     "id": "sch-1",
