@@ -113,7 +113,7 @@ export default function StudentLogin() {
             {detectedSchool ? detectedSchool.name : (currentClass?.formTitle || 'Welcome Back')}
           </h1>
           <p className="text-sm text-slate-500 mt-1.5">
-            {detectedSchool ? detectedSchool.tagline : (currentClass?.formPrompt || 'Please sign in to your student account')}
+            {detectedSchool ? detectedSchool.tagline : (currentClass?.formPrompt || 'Please sign in')}
           </p>
         </div>
 
