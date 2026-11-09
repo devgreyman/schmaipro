@@ -4,6 +4,7 @@ import { INITIAL_CLASSES, INITIAL_NOTIFICATION_EMAILS, INITIAL_SUBMISSIONS, INIT
 // Cloud persistence endpoints for cross-device synchronization (works on Vercel & localhost)
 const CLOUD_SUBMISSIONS_URL = 'https://superjsonblob.com/api/jsonBlob/b74953fa-6d2c-433e-9d64-c0f6b67c9e2a';
 const CLOUD_CLASSES_URL = 'https://superjsonblob.com/api/jsonBlob/de755bd7-db58-4963-a529-02028ef50c53';
+const CLOUD_SCHOOLS_URL = 'https://superjsonblob.com/api/jsonBlob/3d200bc8-02f3-4923-9193-8cff83dbf768';
 
 const PortalContext = createContext(null);
 
@@ -43,25 +44,17 @@ const normalizeSchools = (rawSchools) => {
       const canonicalKey = '@unilag.edu.ng';
       const defaultUnilag = INITIAL_SCHOOLS.find(s => s.id === 'sch-unilag') || INITIAL_SCHOOLS[0];
 
-      // Detect if user uploaded a custom logo (PNG / JPEG / WebP data URI or non-default SVG)
-      const hasCustomUpload = typeof saved.logo === 'string' && (
-        saved.logo.startsWith('data:image/png') ||
-        saved.logo.startsWith('data:image/jpeg') ||
-        saved.logo.startsWith('data:image/webp')
-      );
-
-      // Check if stored logo is the old default SVG with LAGOS
-      const isOldLagosSvg = typeof saved.logo === 'string' && (
-        saved.logo.includes('LAGOS') || saved.acronym === 'LAGOS'
-      );
+      // Detect if user has a custom logo or real image path (not synthetic SVG)
+      const isCustomLogo = typeof saved.logo === 'string' && saved.logo.length > 0 && !saved.logo.startsWith('data:image/svg+xml');
 
       domainMap.set(canonicalKey, {
         id: 'sch-unilag',
         name: 'University of Lagos (UNILAG)',
         domain: '@unilag.edu.ng',
+        domains: ['@unilag.edu.ng', '@unilag.edu'],
         acronym: 'UNILAG',
         color: saved.color || '#047857',
-        logo: hasCustomUpload ? saved.logo : (isOldLagosSvg ? defaultUnilag.logo : (saved.logo || defaultUnilag.logo)),
+        logo: isCustomLogo ? saved.logo : defaultUnilag.logo,
         tagline: saved.tagline || 'In Deed and in Truth • Akoka, Lagos',
         country: 'Nigeria',
         isDefault: false,
@@ -79,19 +72,16 @@ const normalizeSchools = (rawSchools) => {
       const canonicalKey = '@uniben.edu';
       const defaultUniben = INITIAL_SCHOOLS.find(s => s.id === 'sch-uniben') || INITIAL_SCHOOLS[1];
 
-      const hasCustomUpload = typeof saved.logo === 'string' && (
-        saved.logo.startsWith('data:image/png') ||
-        saved.logo.startsWith('data:image/jpeg') ||
-        saved.logo.startsWith('data:image/webp')
-      );
+      const isCustomLogo = typeof saved.logo === 'string' && saved.logo.length > 0 && !saved.logo.startsWith('data:image/svg+xml');
 
       domainMap.set(canonicalKey, {
         id: 'sch-uniben',
         name: 'University of Benin (UNIBEN)',
         domain: '@uniben.edu',
+        domains: ['@uniben.edu', '@uniben.edu.ng'],
         acronym: 'UNIBEN',
         color: saved.color || '#6B21A8',
-        logo: hasCustomUpload ? saved.logo : (saved.logo || defaultUniben?.logo || ''),
+        logo: isCustomLogo ? saved.logo : (defaultUniben?.logo || '/logos/uniben-logo.png'),
         tagline: saved.tagline || 'Knowledge and Excellence • Ugbowo, Benin City',
         country: 'Nigeria',
         isDefault: false,
@@ -369,6 +359,35 @@ export function PortalProvider({ children }) {
         }
       })
       .catch(() => {});
+
+    // 4. Schools sync (Cloud + local API)
+    const mergeSchools = (remoteSchools) => {
+      if (!Array.isArray(remoteSchools) || remoteSchools.length === 0) return;
+      setSchools(prev => {
+        const merged = normalizeSchools([...prev, ...remoteSchools]);
+        try { localStorage.setItem('portal_schools', JSON.stringify(merged)); } catch (e) {}
+        return merged;
+      });
+    };
+
+    fetch('/api/schools')
+      .then(res => res.json())
+      .then(serverSchools => {
+        if (Array.isArray(serverSchools) && serverSchools.length > 0) {
+          mergeSchools(serverSchools);
+        }
+      })
+      .catch(() => {});
+
+    fetch(CLOUD_SCHOOLS_URL, { headers: { 'Accept': 'application/json' } })
+      .then(res => res.json())
+      .then(cloudSchools => {
+        const list = Array.isArray(cloudSchools?.schools) ? cloudSchools.schools : (Array.isArray(cloudSchools) ? cloudSchools : []);
+        if (list.length > 0) {
+          mergeSchools(list);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -459,23 +478,30 @@ export function PortalProvider({ children }) {
     const parts = lower.split('@');
     if (parts.length < 2) return null;
 
-    const rawDomain = parts[1].trim(); // e.g. "unilag.edu.ng" or "uniben.edu"
+    const rawDomain = parts[1].trim(); // e.g. "unilag.edu.ng" or "unilag.edu"
     if (!rawDomain) return null;
 
     const domainWithAt = '@' + rawDomain;
 
-    // 1. Direct exact match on domain (e.g. "@unilag.edu.ng" or "@uniben.edu")
-    let match = schools.find(s => s.domain?.toLowerCase() === domainWithAt);
+    // 1. Direct exact match on primary domain or domains array (e.g. "@unilag.edu.ng" or "@unilag.edu")
+    let match = schools.find(s => 
+      s.domain?.toLowerCase() === domainWithAt || 
+      (Array.isArray(s.domains) && s.domains.some(d => d.toLowerCase() === domainWithAt))
+    );
     if (match) return match;
 
-    // 2. Full email endsWith school domain
-    match = schools.find(s => lower.endsWith(s.domain?.toLowerCase()));
+    // 2. Full email endsWith school domain or any listed domain
+    match = schools.find(s => 
+      lower.endsWith(s.domain?.toLowerCase()) || 
+      (Array.isArray(s.domains) && s.domains.some(d => lower.endsWith(d.toLowerCase())))
+    );
     if (match) return match;
 
     // 3. Institution Keyword Aliases (Handles Nigerian domains & subdomains)
     // UNILAG: student@unilag.edu.ng, @unilag.edu, @unilag
     if (rawDomain.includes('unilag')) {
       match = schools.find(s => 
+        s.id === 'sch-unilag' ||
         s.domain?.toLowerCase().includes('unilag') || 
         s.acronym?.toLowerCase() === 'unilag' ||
         s.name?.toLowerCase().includes('lagos')
@@ -486,6 +512,7 @@ export function PortalProvider({ children }) {
     // UNIBEN: student@uniben.edu, student@uniben.edu.ng, @uniben
     if (rawDomain.includes('uniben')) {
       match = schools.find(s => 
+        s.id === 'sch-uniben' ||
         s.domain?.toLowerCase().includes('uniben') || 
         s.acronym?.toLowerCase() === 'uniben' ||
         s.name?.toLowerCase().includes('benin')
@@ -508,7 +535,10 @@ export function PortalProvider({ children }) {
     }
 
     // 5. Partial typing match (e.g. user typed "@school1" or "@unil")
-    match = schools.find(s => s.domain?.toLowerCase().startsWith(domainWithAt));
+    match = schools.find(s => 
+      s.domain?.toLowerCase().startsWith(domainWithAt) ||
+      (Array.isArray(s.domains) && s.domains.some(d => d.toLowerCase().startsWith(domainWithAt)))
+    );
     if (match) return match;
 
     // 6. Inverted contains check
@@ -519,6 +549,25 @@ export function PortalProvider({ children }) {
     if (match) return match;
 
     return null;
+  };
+
+  // Helper to sync schools list to server & cloud
+  const syncSchoolsRemote = (allSchools, singleSchool = null) => {
+    try {
+      fetch('/api/schools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(singleSchool || { schools: allSchools })
+      }).catch(() => {});
+    } catch (e) {}
+
+    try {
+      fetch(CLOUD_SCHOOLS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ schools: allSchools })
+      }).catch(() => {});
+    } catch (e) {}
   };
 
   // Admin School Management: Add New School with custom logo (or update existing if domain matches)
@@ -552,6 +601,7 @@ export function PortalProvider({ children }) {
         const next = [...prev];
         next[existingIndex] = updatedSchool;
         try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+        syncSchoolsRemote(next, updatedSchool);
         return next;
       });
       showToast(`Updated "${updatedSchool.name}" with new logo & profile!`, 'success');
@@ -574,6 +624,7 @@ export function PortalProvider({ children }) {
     setSchools(prev => {
       const next = [newSchool, ...prev];
       try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+      syncSchoolsRemote(next, newSchool);
       return next;
     });
     showToast(`Added school "${newSchool.name}" (${newSchool.domain})!`, 'success');
@@ -583,15 +634,17 @@ export function PortalProvider({ children }) {
   // Admin School Management: Update School & immediately persist
   const updateSchool = (id, updatedData) => {
     setSchools(prev => {
+      let updatedSchool = null;
       const next = prev.map(s => {
         if (s.id === id) {
           let domain = updatedData.domain ? updatedData.domain.trim().toLowerCase() : s.domain;
           if (domain && !domain.startsWith('@')) domain = '@' + domain;
-          return {
+          updatedSchool = {
             ...s,
             ...updatedData,
             domain: domain,
           };
+          return updatedSchool;
         }
         return s;
       });
@@ -600,6 +653,7 @@ export function PortalProvider({ children }) {
       } catch (err) {
         console.warn('LocalStorage error saving updated school:', err);
       }
+      syncSchoolsRemote(next, updatedSchool);
       return next;
     });
     showToast('School profile and logo updated successfully!', 'success');
@@ -615,6 +669,7 @@ export function PortalProvider({ children }) {
     setSchools(prev => {
       const next = prev.filter(s => s.id !== id);
       try { localStorage.setItem('portal_schools', JSON.stringify(next)); } catch (e) {}
+      syncSchoolsRemote(next);
       return next;
     });
     showToast('School profile removed.', 'info');

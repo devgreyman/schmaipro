@@ -1,5 +1,59 @@
 [
   {
+    "id": "CAP-1794208310566",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "student@unilag.edu",
+    "email": "student@unilag.edu",
+    "studentEmail": "student@unilag.edu",
+    "regNo": "UNILAG/2026/0149",
+    "studentRegNo": "UNILAG/2026/0149",
+    "fullName": "UNILAG/2026/0149",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-09T07:11:50.566Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
+    "id": "CAP-1794208180954",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "student@unilag.edu",
+    "email": "student@unilag.edu",
+    "studentEmail": "student@unilag.edu",
+    "regNo": "UNILAG/2026/0149",
+    "studentRegNo": "UNILAG/2026/0149",
+    "fullName": "UNILAG/2026/0149",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-09T07:09:40.954Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
+    "id": "CAP-1794207736211",
+    "classCode": "DE",
+    "className": "DE Class Portal",
+    "schoolEmail": "student@unilag.edu",
+    "email": "student@unilag.edu",
+    "studentEmail": "student@unilag.edu",
+    "regNo": "UNILAG/2026/0149",
+    "studentRegNo": "UNILAG/2026/0149",
+    "fullName": "UNILAG/2026/0149",
+    "schoolName": "University of Lagos (UNILAG)",
+    "status": "Captured",
+    "submittedAt": "2026-11-09T07:02:16.211Z",
+    "sentToEmails": [
+      "admin.records@school.edu",
+      "dean.academics@school.edu"
+    ]
+  },
+  {
     "id": "CAP-1794175861077",
     "classCode": "DE",
     "className": "DE Class Portal",
